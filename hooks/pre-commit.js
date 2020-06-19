@@ -4,6 +4,7 @@ const cofs = require("fs-extra");
 async function main() {
 	await cofs.mkdirp("www");
 	let filenames = await cofs.readdir("src");
+	let flag = 0;
 	for (let filename of filenames) {
 		if (filename.endsWith(".js")) {
 			let text = await cofs.readFile("src/" + filename, "utf8");
@@ -23,9 +24,14 @@ async function main() {
 					return x0[0] + JSON.stringify(map[x1]);
 				});
 			}
-			await cofs.writeFile("www/" + filename, text);
+			let old = await cofs.readFile("www/" + filename, "utf8");
+			if (old != text) {
+				await cofs.writeFile("www/" + filename, text);
+				flag = 1;
+			}
 		}
 	}
+	process.exit(flag);
 }
 
 main();

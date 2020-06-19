@@ -23,7 +23,7 @@ exports.params = {
 	},
 };
 var open_at = 0; // 浮窗最后弹出时间
-var evt_at = 0;
+var evt_at = 0; // 最近窗口切换时间
 var win = we.newFloatWindow("adskip");
 function onSkip(cls) {
 	if (cls) {

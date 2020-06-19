@@ -1,11 +1,12 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @namespace         https://soulsign.inu1255.cn/scripts/173
-// @settingURL        http://192.168.1.101:8000/src/adskip/
-// @version           1.0.2
+// @version           1.0.3
+// @namespace         https://gitee.com/inu1255/q2g-plugins
+// @settingURL        https://inu1255.gitee.io/q2g-plugins/adskip/
+// @updateURL         https://inu1255.gitee.io/q2g-plugins/adskip.js
+// @logoURL           https://inu1255.gitee.io/q2g-plugins/adskip.png
 // ==/UserScript==
-console.log("adskip loaded");
 /**
  * 设置页面需要的权限
  * we.getApps
@@ -22,7 +23,7 @@ exports.params = {
 	},
 };
 var open_at = 0; // 浮窗最后弹出时间
-var evt_at = 0;
+var evt_at = 0; // 最近窗口切换时间
 var win = we.newFloatWindow("adskip");
 function onSkip(cls) {
 	if (cls) {
