@@ -1,0 +1,13 @@
+[
+	{
+		"author": "inu1255",
+		"name": "自动跳过",
+		"logoURL": "https://inu1255.gitee.io/q2g-plugins/adskip.png",
+		"updateURL": "https://inu1255.gitee.io/q2g-plugins/adskip.js"
+	},
+	{
+		"author": "inu1255",
+		"name": "wifi密码复制",
+		"updateURL": "https://inu1255.gitee.io/q2g-plugins/wificopy.js"
+	}
+]
