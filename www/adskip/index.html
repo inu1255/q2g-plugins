@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+		<link rel="icon" href="<%= BASE_URL %>favicon.ico" />
+		<title>广告跳过设置</title>
+		<link href="https://at.alicdn.com/t/font_1259149_urxjfogncgd.css" rel="stylesheet" type="text/css" />
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@^5.0.0/css/materialdesignicons.min.css" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/animate.css@^3.5.2/animate.min.css" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.min.css" rel="stylesheet" type="text/css" />
+	</head>
+
+	<body>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue-router/dist/vue-router.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/vuex@3.4.0/dist/vuex.min.js"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/axios@0.19.2/dist/axios.min.js"></script> -->
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/lang/zh-hans.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/icon-set/mdi-v4.umd.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script> -->
+		<noscript>
+			<strong>We're sorry but quan2go-web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+		</noscript>
+		<div id="app" style="opacity: 0;">
+			<q-layout v-if="$route.name=='home'">
+				<q-header elevated>
+					<q-toolbar class="bg-purple text-white">
+						<q-toolbar-title>广告跳过设置</q-toolbar-title>
+						<q-btn flat dense @click="save()">保存</q-btn>
+					</q-toolbar>
+				</q-header>
+				<q-page-container>
+					<q-list>
+						<q-item v-for="app in apps" :key="app.pkg" :to="`/adpkg?pkg=${app.pkg}`">
+							<q-item-section avatar>
+								<q-avatar>
+									<img v-if="app.logo" :src="`data:image/png;base64,${app.logo}`"></img>
+									<span v-else>{{app.name&&app.name[0]}}</span>
+								</q-avatar>
+							</q-item-section>
+							<q-item-section>
+								<q-item-label>{{app.name}}
+									<q-badge v-if="app._idx>=0" class="q-ml-sm" color="grey">已禁用</q-badge>
+									<q-badge v-else-if="app._skip>0" class="q-ml-sm" color="green">已启用</q-badge>
+									<q-badge v-else-if="app._hasAD" class="q-ml-sm" color="orange">未启用</q-badge>
+								</q-item-label>
+								<q-item-label caption v-if="app._last">最近: {{formatDate(app._last)}}</q-item-label>
+							</q-item-section>
+							<q-item-section side v-if="app._skipCnt">
+								<span>跳过{{app._skipCnt}}次</span>
+							</q-item-section>
+						</q-item>
+					</q-list>
+				</q-page-container>
+			</q-layout>
+			<q-layout v-else-if="$route.name=='adpkg'">
+				<q-header elevated>
+					<q-toolbar class="bg-purple text-white">
+						<q-btn flat dense round icon="keyboard_backspace" @click="$router.back()" />
+						<q-toolbar-title>{{pkg.name}}</q-toolbar-title>
+					</q-toolbar>
+				</q-header>
+				<q-page-container>
+
+					<q-list>
+						<q-item>
+							<q-item-section>
+								<q-item-label>启用广告跳过</q-item-label>
+							</q-item-section>
+							<q-item-section side>
+								<q-toggle :value="idx<0" @input="toggleSkip"></q-toggle>
+							</q-item-section>
+						</q-item>
+						<q-item-label header>详细设置</q-item-label>
+						<q-item v-for="(v,k) in cls" :key="k">
+							<q-item-section>
+								<q-item-label>{{k}}</q-item-label>
+								<q-item-label caption><span>跳过{{v.cnt}}次</span>&nbsp;&nbsp;<span v-if="v.last">最近: {{formatDate(v.last)}}</span></q-item-label>
+							</q-item-section>
+							<q-item-section side>
+								<q-toggle :value="v.skip==1" @input="toggle(v)"></q-toggle>
+							</q-item-section>
+						</q-item>
+					</q-list>
+				</q-page-container>
+			</q-layout>
+		</div>
+		<script src="index.js"></script>
+	</body>
+</html>
