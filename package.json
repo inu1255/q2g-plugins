@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "node build.js",
+    "build": "node hooks/pre-commit.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "node hooks/pre-commit.js"
+      "pre-commit": "npm run build"
     }
   },
   "author": "",

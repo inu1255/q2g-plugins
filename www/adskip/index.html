@@ -11,6 +11,10 @@
 		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@^5.0.0/css/materialdesignicons.min.css" rel="stylesheet" type="text/css" />
 		<link href="https://cdn.jsdelivr.net/npm/animate.css@^3.5.2/animate.min.css" rel="stylesheet" type="text/css" />
 		<link href="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.min.css" rel="stylesheet" type="text/css" />
+		<style>
+			#app {opacity: 0;}
+			.mobile #app {opacity: 1}
+		</style>
 	</head>
 
 	<body>
@@ -25,7 +29,7 @@
 		<noscript>
 			<strong>We're sorry but quan2go-web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
 		</noscript>
-		<div id="app" style="opacity: 0;">
+		<div id="app">
 			<q-layout v-if="$route.name=='home'">
 				<q-header elevated>
 					<q-toolbar class="bg-purple text-white">

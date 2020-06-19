@@ -12,9 +12,8 @@ const router = new VueRouter({
 	],
 });
 Vue.use(VueRouter);
-var app = document.getElementById("app");
 new Vue({
-	el: app,
+	el: "#app",
 	router: router,
 	data: function () {
 		return {
@@ -49,7 +48,13 @@ new Vue({
 					}
 					return x;
 				})
-				.sort((a, b) => b._last - a._last);
+				.sort((a, b) => {
+					var t = b._last - a._last;
+					if (t) return t;
+					var t = b._hasAD - a._hasAD;
+					if (t) return t;
+					return b._idx - a._idx;
+				});
 		},
 	},
 	watch: {
@@ -94,7 +99,6 @@ new Vue({
 		},
 	},
 	mounted: function () {
-		app.style.opacity = 1;
 		this.refresh();
 		we.getApps(1).then((apps) => (this.apps_ = apps));
 		this.params = JSON.parse(we.getParams());
