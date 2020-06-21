@@ -33,6 +33,7 @@ exports.run = async function () {
 		await we.sleep(500);
 		if (await getpwd()) break;
 	}
+	we.closeVirtualDisplay();
 	await we.performGlobalAction(1);
 	await we.performGlobalAction(1);
 };

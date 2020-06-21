@@ -46,7 +46,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let n = 3;
 	do {
 		let list = await we.getNodes(1, "跳过");
-		list = list.filter((x) => !/android\.launcher$/.test(x.pkg));
+		list = list.filter((x) => !/android\.launcher$/.test(x.pkg) && x.text.length < 6);
 		if (list.length) {
 			for (let item of list) {
 				let id = item.id;
