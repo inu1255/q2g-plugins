@@ -16,23 +16,42 @@ exports.params = {
 	white_list: ["android", "com.android.settings", "com.miui.home", "com.huawei.android.launcher", "cn.inu1255.adskip", "cn.inu1255.quan2go", "com.android.systemui"],
 	ad_setting: {
 		"com.sina.weibo": {
-			关闭广告共享计划: {skip: 1, cnt: 0, last: 0},
-			关闭评论区广告: {skip: 1, cnt: 0, last: 0},
-			关闭关注浮窗: {skip: 2, cnt: 0, last: 0},
+			关闭广告共享计划: {pkg: "com.sina.weibo", cls: "关闭广告共享计划", skip: 1, cnt: 0, last: 0},
+			关闭评论区广告: {pkg: "com.sina.weibo", cls: "关闭评论区广告", skip: 1, cnt: 0, last: 0},
+			关闭关注浮窗: {pkg: "com.sina.weibo", cls: "关闭关注浮窗", skip: 2, cnt: 0, last: 0},
 		},
 	},
 };
 var open_at = 0; // 浮窗最后弹出时间
 var evt_at = 0; // 最近窗口切换时间
 var win = we.newFloatWindow("adskip");
+var params_pms;
 function onSkip(cls) {
 	if (cls) {
 		cls.cnt++;
 		cls.last = Date.now();
+		bmob.create("ad_setting", cls);
 	}
-	// 保存配置信息
-	exports.save();
 }
+exports.getParams = function () {
+	if (params_pms) return params_pms;
+	return (params_pms = Promise.all([
+		bmob.select("ad_setting").then((list) => {
+			let ad_setting = exports.params.ad_setting;
+			for (let item of list) {
+				let pkgs = ad_setting[item.pkg] || (ad_setting[item.pkg] = {});
+				pkgs[item.cls] = item;
+			}
+		}),
+		bmob.select("params", "k='ad_white_list'").then((list) => {
+			if (list.length) exports.params.white_list = list[0].v;
+		}),
+	]).then(() => exports.params));
+};
+exports.setParams = function () {
+	params_pms = null;
+	return exports.getParams();
+};
 /**
  * 窗口切换时触发
  * @param {string} pkgname
@@ -51,7 +70,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 			for (let item of list) {
 				let id = item.id;
 				let pkg = ad_setting[pkgname] || (ad_setting[pkgname] = {});
-				let cls = pkg[clsname] || (pkg[clsname] = {skip: 0, cnt: 0, last: 0});
+				let cls = pkg[clsname] || (pkg[clsname] = {pkg: pkgname, cls: clsname, skip: 0, cnt: 0, last: 0});
 				if (cls.skip == 1) we.clickById(id).then((x) => x && onSkip(cls));
 				else if (cls.skip == 0) {
 					open_at = Date.now();

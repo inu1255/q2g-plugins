@@ -9,6 +9,7 @@ module.exports = {
 	parser: "babel-eslint",
 	globals: {
 		we: true,
+		bmob: true,
 		UI: true,
 		Quasar: true,
 		Vue: true,

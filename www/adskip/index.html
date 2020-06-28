@@ -25,12 +25,13 @@
 		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.umd.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/lang/zh-hans.umd.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/icon-set/mdi-v4.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/hydrogen-js-sdk@2.2.4/dist/Bmob-2.2.4.min.js"></script>
 		<!-- <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script> -->
 		<noscript>
 			<strong>We're sorry but quan2go-web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
 		</noscript>
 		<div id="app">
-			<q-layout v-if="$route.name=='home'">
+			<q-layout v-if="!$route.query.pkg">
 				<q-header elevated>
 					<q-toolbar class="bg-purple text-white">
 						<q-toolbar-title>广告跳过设置</q-toolbar-title>
@@ -39,7 +40,7 @@
 				</q-header>
 				<q-page-container>
 					<q-list>
-						<q-item v-for="app in apps" :key="app.pkg" :to="`/adpkg?pkg=${app.pkg}`">
+						<q-item v-for="app in apps" :key="app.pkg" :to="`/home?pkg=${app.pkg}`">
 							<q-item-section avatar>
 								<q-avatar>
 									<img v-if="app.logo" :src="`data:image/png;base64,${app.logo}`"></img>
@@ -61,7 +62,7 @@
 					</q-list>
 				</q-page-container>
 			</q-layout>
-			<q-layout v-else-if="$route.name=='adpkg'">
+			<q-layout v-else="$route.query.pkg">
 				<q-header elevated>
 					<q-toolbar class="bg-purple text-white">
 						<q-btn flat dense round icon="keyboard_backspace" @click="$router.back()" />
@@ -69,7 +70,6 @@
 					</q-toolbar>
 				</q-header>
 				<q-page-container>
-
 					<q-list>
 						<q-item>
 							<q-item-section>
