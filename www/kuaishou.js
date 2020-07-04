@@ -42,6 +42,19 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		we.toast("开始刷金币");
 		running = Date.now();
 		next();
+	} else if ("com.yxcorp.gifshow.webview.KwaiWebViewActivity" == clsname) {
+		we.sleep(1e3)
+			.then(function () {
+				return we.getNodes(1);
+			})
+			.then(function (nodes) {
+				for (var i = 0; i < nodes.length; i++) {
+					var node = nodes[i];
+					if (/滑动/.test(node.text)) {
+						return we.dispatchGesture(`${node.left + 10},${node.top + 10},${Math.floor(node.right * 0.75)},${node.top + 14}`, 0, 800);
+					}
+				}
+			});
 	} else if (running) {
 		running = false;
 		we.toast("停止刷金币");
