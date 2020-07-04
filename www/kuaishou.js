@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.0
+// @version           1.0.1
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
@@ -12,7 +12,7 @@ function next() {
 	if (!running) return;
 	pms = pms
 		.then(function () {
-			return we.sleep(Math.floor(Math.random() * 3e3) + 3000);
+			return we.sleep(Math.floor(Math.random() * 5e3) + 5000);
 		})
 		.then(function () {
 			if (!running) return;
