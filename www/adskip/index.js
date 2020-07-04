@@ -11,15 +11,17 @@ const router = new VueRouter({
 		},
 	],
 });
+const {date} = Quasar;
 Vue.use(VueRouter);
 new Vue({
 	el: "#app",
 	router: router,
 	data: function () {
 		return {
+			total: 0,
 			// home
 			apps_: [],
-			params: {},
+			params: null,
 			// adpkg
 			pkg: {},
 			cls: {},
@@ -28,9 +30,11 @@ new Vue({
 	},
 	computed: {
 		apps() {
+			if (!this.params) return [];
 			let ad = this.params.ad_setting;
 			let whites = this.params.white_list;
-			return this.apps_
+			let total = 0;
+			let list = this.apps_
 				.map((x) => {
 					x._skipCnt = 0;
 					x._last = 0;
@@ -46,6 +50,7 @@ new Vue({
 						x._skipCnt += v.cnt;
 						x._last = Math.max(x._last, v.last);
 					}
+					total += x._skipCnt;
 					return x;
 				})
 				.sort((a, b) => {
@@ -55,6 +60,8 @@ new Vue({
 					if (t) return t;
 					return b._idx - a._idx;
 				});
+			this.total = total;
+			return list;
 		},
 	},
 	watch: {
@@ -63,19 +70,22 @@ new Vue({
 		},
 	},
 	methods: {
-		formatDate(t) {
-			return Quasar.date.formatDate(t, "YYYY-MM-DD HH:mm:ss");
-		},
 		save() {
-			we.close(JSON.stringify(this.params, (k, v) => (k[0] == "_" ? undefined : v)));
+			// we.close(JSON.stringify(this.params, (k, v) => (k[0] == "_" ? undefined : v)));
+			we.close(0);
+		},
+		formatDate(t) {
+			return date.formatDate(t, "YYYY-MM-DD HH:mm:ss");
 		},
 		// adpkg
-		toggle(cls) {
+		async toggle(cls) {
+			cls = await bmob.create('ad_setting', cls)
 			if (cls.skip == 1) cls.skip = 2;
 			else cls.skip = 1;
 		},
-		toggleSkip() {
+		async toggleSkip() {
 			let whites = this.params.white_list;
+			if (!this.white) this.white = await bmob.getOrCreate('params', { k: 'ad_white_list', v: whites }, "k")
 			if (this.idx < 0) {
 				this.idx = whites.length;
 				whites.push(this.pkg.pkg);
@@ -83,6 +93,7 @@ new Vue({
 				whites.splice(this.idx, 1);
 				this.idx = -1;
 			}
+			this.white.v = Array.from(whites)
 		},
 		async refresh() {
 			if (!this.$route.query.pkg) return;
@@ -99,8 +110,8 @@ new Vue({
 		},
 	},
 	mounted: function () {
+		this.params = JSON.parse(we.getParams());
 		this.refresh();
 		we.getApps(1).then((apps) => (this.apps_ = apps));
-		this.params = JSON.parse(we.getParams());
 	},
 });

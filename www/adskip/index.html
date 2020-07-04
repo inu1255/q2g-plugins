@@ -33,7 +33,7 @@
 		<div id="app">
 			<q-layout v-if="!$route.query.pkg">
 				<q-header elevated>
-					<q-toolbar class="bg-purple text-white">
+					<q-toolbar class="bg-green text-white">
 						<q-toolbar-title>广告跳过设置</q-toolbar-title>
 						<q-btn flat dense @click="save()">保存</q-btn>
 					</q-toolbar>
@@ -64,7 +64,7 @@
 			</q-layout>
 			<q-layout v-else="$route.query.pkg">
 				<q-header elevated>
-					<q-toolbar class="bg-purple text-white">
+					<q-toolbar class="bg-green text-white">
 						<q-btn flat dense round icon="keyboard_backspace" @click="$router.back()" />
 						<q-toolbar-title>{{pkg.name}}</q-toolbar-title>
 					</q-toolbar>
@@ -93,6 +93,7 @@
 				</q-page-container>
 			</q-layout>
 		</div>
+		<script src="bmob.js"></script>
 		<script src="index.js"></script>
 	</body>
 </html>

@@ -9,5 +9,10 @@
 		"author": "inu1255",
 		"name": "wifi密码复制",
 		"updateURL": "https://inu1255.gitee.io/q2g-plugins/wificopy.js"
+	},
+	{
+		"author": "inu1255",
+		"name": "快手刷金币",
+		"updateURL": "https://inu1255.gitee.io/q2g-plugins/kuaishou.js"
 	}
 ]
