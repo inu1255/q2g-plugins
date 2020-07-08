@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.0.3
+// @version           1.0.4
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @settingURL        https://inu1255.gitee.io/q2g-plugins/adskip/
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/adskip.js
@@ -58,9 +58,9 @@ exports.setParams = function () {
  * @param {string} clsname
  */
 exports.onWindowChange = async function (pkgname, clsname) {
-	var t = (evt_at = Date.now()); // 如果下个窗口事件已发生，中断当前操作
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
+	var t = (evt_at = Date.now()); // 如果下个窗口事件已发生，中断当前操作
 	let ad_setting = exports.params.ad_setting;
 	let n = 3;
 	do {

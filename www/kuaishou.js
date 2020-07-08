@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.1
+// @version           1.0.2
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
@@ -37,7 +37,7 @@ function next() {
 exports.onWindowChange = async function (pkgname, clsname) {
 	if (running && running + 1e3 > Date.now()) return;
 	console.log(pkgname, clsname);
-	if ("com.yxcorp.gifshow.HomeActivity" == clsname) {
+	if (["com.yxcorp.gifshow.HomeActivity", "com.ss.android.ugc.aweme.main.MainActivity"].indexOf(clsname) >= 0) {
 		if (running) return;
 		we.toast("开始刷金币");
 		running = Date.now();
@@ -45,12 +45,12 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	} else if ("com.yxcorp.gifshow.webview.KwaiWebViewActivity" == clsname) {
 		we.sleep(1e3)
 			.then(function () {
-				return we.getNodes(1);
+				return we.getNodes(1, "向右拖动");
 			})
 			.then(function (nodes) {
 				for (var i = 0; i < nodes.length; i++) {
 					var node = nodes[i];
-					if (/滑动/.test(node.text)) {
+					if (/向右拖动/.test(node.text)) {
 						return we.dispatchGesture(`${node.left + 10},${node.top + 10},${Math.floor(node.right * 0.75)},${node.top + 14}`, 0, 800);
 					}
 				}
