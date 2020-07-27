@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.3
+// @version           1.0.4
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
@@ -37,7 +37,9 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		we.toast("开始刷金币");
 		running = Date.now();
 		await next();
-	} else if ("com.yxcorp.gifshow.webview.KwaiWebViewActivity" == clsname) {
+		return 1;
+	}
+	if ("com.yxcorp.gifshow.webview.KwaiWebViewActivity" == clsname) {
 		we.sleep(1e3)
 			.then(function () {
 				return we.getNodes(1, "向右拖动");
@@ -50,8 +52,12 @@ exports.onWindowChange = async function (pkgname, clsname) {
 					}
 				}
 			});
-	} else if (running) {
+		return 2;
+	}
+	if (running) {
 		running = false;
 		we.toast("停止刷金币");
+		return 3;
 	}
+	return 4;
 };

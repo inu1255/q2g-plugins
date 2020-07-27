@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.0.5
+// @version           1.0.6
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @settingURL        https://inu1255.gitee.io/q2g-plugins/adskip/
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/adskip.js
@@ -100,16 +100,17 @@ exports.onWindowChange = async function (pkgname, clsname) {
  * @param {string} pkg
  * @param {string} cls
  */
-exports.onContentChange = function (pkg, cls) {
+exports.onContentChange = async function (pkg, cls) {
 	if (!win) win = we.newFloatWindow("adskip");
 	if (pkg != "com.sina.weibo" || cls != "com.sina.weibo.feed.DetailWeiboActivity") return;
 	let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
-	if (sina_weibo["关闭广告共享计划"].skip == 1) we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
+	if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
 	if (sina_weibo["关闭评论区广告"].skip == 1)
-		we.clickByView("com.sina.weibo:id/ll_close")
+		await we
+			.clickByView("com.sina.weibo:id/ll_close")
 			.then(function (ok) {
 				if (ok) return we.clickByText("不感兴趣");
 			})
 			.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
-	if (sina_weibo["关闭关注浮窗"].skip == 1) we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
+	if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 };
