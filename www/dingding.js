@@ -21,9 +21,9 @@ function timeNow() {
 	return now.getHours() * 60 + now.getMinutes();
 }
 
-async function tryN(n, fn) {
+async function tryN(n, fn, nocheck) {
 	while (n-- > 0) {
-		if (!appset.has(await we.getCurrentPackage())) throw new Error("不是指定的APP");
+		if (!nocheck && !appset.has(await we.getCurrentPackage())) throw new Error("不是指定的APP");
 		if (await Promise.resolve(fn())) break;
 		await we.sleep(1e3);
 	}
@@ -132,7 +132,7 @@ async function sign() {
 	await we.open("com.alibaba.android.rimet");
 	await tryN(5, async function () {
 		return (await we.getCurrentPackage()) === "com.alibaba.android.rimet";
-	});
+	}, true);
 	await gotoCompany();
 	await gotoSign();
 	await doSign();

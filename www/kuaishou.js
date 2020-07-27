@@ -1,32 +1,27 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.2
+// @version           1.0.3
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
 
-var pms = Promise.resolve();
 var running = false;
-function next() {
-	if (!running) return;
-	pms = pms
-		.then(function () {
-			return we.sleep(Math.floor(Math.random() * 5e3) + 5000);
-		})
-		.then(function () {
+async function next() {
+	try {
+		while (running) {
+			await we.sleep(Math.floor(Math.random() * 5e3) + 5000);
 			if (!running) return;
 			var x = Math.floor(Math.random() * 200) + 400;
 			var y = Math.floor(Math.random() * 300) + 100;
 			var dy = Math.floor(Math.random() * 100) + 900;
 			var s = Math.floor(Math.random() * 10) + 30;
-			return we.dispatchGesture(`${x},${y + dy},${x},${y}`, 0, s);
-		})
-		.then(next)
-		.catch(function (e) {
-			console.log(e);
-			running = false;
-		});
+			await we.dispatchGesture(`${x},${y + dy},${x},${y}`, 0, s);
+		}
+	} catch (e) {
+		console.error(e);
+		running = false;
+	}
 }
 
 /**
@@ -41,7 +36,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		if (running) return;
 		we.toast("开始刷金币");
 		running = Date.now();
-		next();
+		await next();
 	} else if ("com.yxcorp.gifshow.webview.KwaiWebViewActivity" == clsname) {
 		we.sleep(1e3)
 			.then(function () {
@@ -59,5 +54,4 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		running = false;
 		we.toast("停止刷金币");
 	}
-	console.log(clsname);
 };
