@@ -14,5 +14,11 @@
 		"author": "inu1255",
 		"name": "快手刷金币",
 		"updateURL": "https://inu1255.gitee.io/q2g-plugins/kuaishou.js"
+	},
+	{
+		"author": "inu1255",
+		"name": "钉钉打卡",
+		"minApk": 10503,
+		"updateURL": "https://inu1255.gitee.io/q2g-plugins/dingding.js"
 	}
 ]

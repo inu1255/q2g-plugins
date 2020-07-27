@@ -5,8 +5,6 @@
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/wificopy.js
 // ==/UserScript==
-console.log("wificopy loaded");
-
 async function getpwd() {
 	if (await we.getScreenCapture()) {
 		let data = await we.scan();

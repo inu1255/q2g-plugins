@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.0.4
+// @version           1.0.5
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @settingURL        https://inu1255.gitee.io/q2g-plugins/adskip/
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/adskip.js
@@ -24,7 +24,7 @@ exports.params = {
 };
 var open_at = 0; // 浮窗最后弹出时间
 var evt_at = 0; // 最近窗口切换时间
-var win = we.newFloatWindow("adskip");
+var win;
 var params_pms;
 function onSkip(cls) {
 	if (cls) {
@@ -58,6 +58,7 @@ exports.setParams = function () {
  * @param {string} clsname
  */
 exports.onWindowChange = async function (pkgname, clsname) {
+	if (!win) win = we.newFloatWindow("adskip");
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
 	var t = (evt_at = Date.now()); // 如果下个窗口事件已发生，中断当前操作
@@ -100,6 +101,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
  * @param {string} cls
  */
 exports.onContentChange = function (pkg, cls) {
+	if (!win) win = we.newFloatWindow("adskip");
 	if (pkg != "com.sina.weibo" || cls != "com.sina.weibo.feed.DetailWeiboActivity") return;
 	let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
 	if (sina_weibo["关闭广告共享计划"].skip == 1) we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
