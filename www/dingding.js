@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              钉钉打卡
-// @version           1.0.0
+// @version           1.0.1
 // @minApk            10503
 // @cronFreq          60e3
 // @namespace         https://gitee.com/inu1255/q2g-plugins
@@ -113,12 +113,19 @@ async function doSign() {
 	if (Date.now() < exports.params.nextAt) throw new Error("已经打卡");
 	console.log(signNode);
 	await we.clickById(signNode.id);
+	exports.params.nextAt += 43200e3;
+	await we.sleep(1000);
+	tryN(5, async function () {
+		await we.sleep(500);
+		let nodes = await we.getNodes(1, "考勤打卡");
+		await we.performGlobalAction(1);
+		if (nodes.length > 0) return true;
+	});
 	return;
 	// 开始外勤打卡
 	nodes = await waitUntil("打卡", {nodeCnt: 2});
 	if (!nodes.length) throw new Error("没有识别到打卡按钮2");
 	await we.clickById(nodes[nodes.length - 1].id);
-	exports.params.nextAt += 43200e3;
 }
 
 async function sign() {
@@ -130,9 +137,13 @@ async function sign() {
 		await we.swape("right");
 	}
 	await we.open("com.alibaba.android.rimet");
-	await tryN(5, async function () {
-		return (await we.getCurrentPackage()) === "com.alibaba.android.rimet";
-	}, true);
+	await tryN(
+		5,
+		async function () {
+			return (await we.getCurrentPackage()) === "com.alibaba.android.rimet";
+		},
+		true
+	);
 	await gotoCompany();
 	await gotoSign();
 	await doSign();

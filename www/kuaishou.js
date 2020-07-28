@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.4
+// @version           1.0.5
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
@@ -12,6 +12,13 @@ async function next() {
 		while (running) {
 			await we.sleep(Math.floor(Math.random() * 5e3) + 5000);
 			if (!running) return;
+			let nodes = await we.getNodes(1);
+			for (let node of nodes) {
+				if (/以后再说|我知道了/.test(node.text)) {
+					await we.clickById(node.id);
+					await we.sleep(500);
+				}
+			}
 			var x = Math.floor(Math.random() * 200) + 400;
 			var y = Math.floor(Math.random() * 300) + 100;
 			var dy = Math.floor(Math.random() * 100) + 900;
@@ -40,18 +47,15 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		return 1;
 	}
 	if ("com.yxcorp.gifshow.webview.KwaiWebViewActivity" == clsname) {
-		we.sleep(1e3)
-			.then(function () {
-				return we.getNodes(1, "向右拖动");
-			})
-			.then(function (nodes) {
-				for (var i = 0; i < nodes.length; i++) {
-					var node = nodes[i];
-					if (/向右拖动/.test(node.text)) {
-						return we.dispatchGesture(`${node.left + 10},${node.top + 10},${Math.floor(node.right * 0.75)},${node.top + 14}`, 0, 800);
-					}
-				}
-			});
+		await we.sleep(1e3);
+		let nodes = await we.getNodes(1, "向右拖动");
+		for (var i = 0; i < nodes.length; i++) {
+			var node = nodes[i];
+			if (/向右拖动/.test(node.text)) {
+				await we.dispatchGesture(`${node.left + 10},${node.top + 10},${Math.floor(node.right * 0.75)},${node.top + 14}`, 0, 800);
+				break;
+			}
+		}
 		return 2;
 	}
 	if (running) {
