@@ -43,7 +43,7 @@
 						<q-item v-for="app in apps" :key="app.pkg" :to="`/home?pkg=${app.pkg}`">
 							<q-item-section avatar>
 								<q-avatar>
-									<img v-if="app.logo" :src="`data:image/png;base64,${app.logo}`"></img>
+									<img v-if="app.logo" :src="/^http:/.test(app.logo)?app.logo:`data:image/png;base64,${app.logo}`"></img>
 									<span v-else>{{app.name&&app.name[0]}}</span>
 								</q-avatar>
 							</q-item-section>

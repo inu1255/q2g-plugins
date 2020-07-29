@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.5
+// @version           1.0.6
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
@@ -16,6 +16,9 @@ async function next() {
 			for (let node of nodes) {
 				if (/以后再说|我知道了/.test(node.text)) {
 					await we.clickById(node.id);
+					await we.sleep(500);
+				} else if (/立即升级/.test(node.text)) {
+					await we.performGlobalAction(1);
 					await we.sleep(500);
 				}
 			}
@@ -39,7 +42,10 @@ async function next() {
 exports.onWindowChange = async function (pkgname, clsname) {
 	if (running && running + 1e3 > Date.now()) return;
 	console.log(pkgname, clsname);
-	if (["com.yxcorp.gifshow.HomeActivity", "com.ss.android.ugc.aweme.main.MainActivity"].indexOf(clsname) >= 0) {
+	if (
+		["com.yxcorp.gifshow.HomeActivity", "com.ss.android.ugc.aweme.main.MainActivity"].indexOf(clsname) >= 0 ||
+		("android.app.Dialog" == clsname && pkgname == "com.kuaishou.nebula")
+	) {
 		if (running) return;
 		we.toast("开始刷金币");
 		running = Date.now();
