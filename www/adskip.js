@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.0.6
+// @version           1.0.7
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @settingURL        https://inu1255.gitee.io/q2g-plugins/adskip/
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/adskip.js
@@ -66,7 +66,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let n = 3;
 	do {
 		let list = await we.getNodes(1, "跳过");
-		list = list.filter((x) => !/android\.launcher$/.test(x.pkg) && x.text.length < 6);
+		list = list.filter((x) => !/android\.launcher$/.test(x.pkg) && x.text.length < 8);
 		if (list.length) {
 			for (let item of list) {
 				let id = item.id;
