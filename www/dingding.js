@@ -1,13 +1,12 @@
 // ==UserScript==
 // @author            inu1255
 // @name              钉钉打卡
-// @version           1.0.1
+// @version           1.0.2
 // @minApk            10503
 // @cronFreq          60e3
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/dingding.js
 // ==/UserScript==
-console.log("dingding loaded");
 exports.params = {
 	beg: 0,
 	end: 0,
@@ -62,8 +61,16 @@ async function gotoCompany() {
 		let node = nodes[i];
 		if (node.text === "通讯录" && nodes[i - 3] && nodes[i - 3].text === "文档") {
 			await we.clickById(node.id);
-			await we.sleep(500);
-			await we.clickById(nodes[i - 1].id);
+			await we.sleep(1e3);
+			break;
+		}
+	}
+	nodes = await waitUntil("", {matchText: "通讯录", notFound: () => we.performGlobalAction(1)});
+	if (!nodes.length) throw new Error("没有找到入口");
+	for (let i = 0; i < nodes.length; i++) {
+		let node = nodes[i];
+		if (node.text === "通讯录" && nodes[i - 3] && nodes[i - 3].text === "文档") {
+			await we.clickById(nodes[i - 2].id);
 			await we.sleep(1e3);
 			break;
 		}
@@ -78,22 +85,14 @@ async function gotoSign() {
 
 async function doSign() {
 	// 识别打卡时间
-	let nodes = await waitUntil("查看规则");
+	let nodes = await waitUntil("班");
 	if (!nodes.length) throw new Error("没有找到打卡入口");
-	if (!exports.params.beg || !exports.params.end) {
-		// 还不知道打卡时间段
-		await we.clickById(nodes[0].id);
-		nodes = await waitUntil(":", {matchText: "-"});
-		for (let node of nodes) {
-			let m = /(\d{2}:\d{2})-(\d{2}:\d{2})/.exec(node.text);
-			if (m) {
-				let ss = m[0].split("-");
-				exports.params.beg = parseTime(ss[0]);
-				exports.params.end = parseTime(ss[1]);
-				await we.performGlobalAction(1);
-				exports.save();
-				break;
-			}
+	for (let node of nodes) {
+		if (node.text.startsWith("上班")) {
+			exports.params.beg = parseTime(node.text.slice(2));
+		} else if (node.text.startsWith("下班")) {
+			exports.params.end = parseTime(node.text.slice(2));
+			exports.save();
 		}
 	}
 	if (!exports.params.beg || !exports.params.end) throw new Error("没有识别到打卡时间");
@@ -106,12 +105,12 @@ async function doSign() {
 	let signNode;
 	for (let i = 0; i < nodes.length; i++) {
 		let node = nodes[i];
-		if (node.text.startsWith("打卡时间")) {
+		if (/已打卡/.test(node.text)) {
 			exports.params.nextAt += 43200e3;
-		} else if (!signNode && node.text != "更新打卡") signNode = node;
+		} else if (!signNode && node.text != "未打卡") signNode = node;
 	}
-	if (Date.now() < exports.params.nextAt) throw new Error("已经打卡");
 	console.log(signNode);
+	if (Date.now() < exports.params.nextAt) throw new Error("已经打卡");
 	await we.clickById(signNode.id);
 	exports.params.nextAt += 43200e3;
 	await we.sleep(1000);
