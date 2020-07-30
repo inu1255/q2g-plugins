@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              快手刷金币
-// @version           1.0.6
+// @version           1.0.7
 // @namespace         https://gitee.com/inu1255/q2g-plugins
 // @updateURL         https://inu1255.gitee.io/q2g-plugins/kuaishou.js
 // ==/UserScript==
