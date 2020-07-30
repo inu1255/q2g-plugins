@@ -17,7 +17,7 @@ async function next() {
 				if (/以后再说|我知道了/.test(node.text)) {
 					await we.clickById(node.id);
 					await we.sleep(500);
-				} else if (/立即升级/.test(node.text)) {
+				} else if (/立即升级|立即邀请/.test(node.text)) {
 					await we.performGlobalAction(1);
 					await we.sleep(500);
 				}
