@@ -2,23 +2,23 @@
 	{
 		"author": "inu1255",
 		"name": "广告跳过",
-		"logoURL": "https://inu1255.gitee.io/q2g-plugins/adskip.png",
-		"updateURL": "https://inu1255.gitee.io/q2g-plugins/adskip.js"
+		"logoURL": "https://q2g-plugins.inu1255.cn/adskip.png",
+		"updateURL": "https://q2g-plugins.inu1255.cn/adskip.js"
 	},
 	{
 		"author": "inu1255",
 		"name": "wifi密码复制",
-		"updateURL": "https://inu1255.gitee.io/q2g-plugins/wificopy.js"
+		"updateURL": "https://q2g-plugins.inu1255.cn/wificopy.js"
 	},
 	{
 		"author": "inu1255",
 		"name": "快手刷金币",
-		"updateURL": "https://inu1255.gitee.io/q2g-plugins/kuaishou.js"
+		"updateURL": "https://q2g-plugins.inu1255.cn/kuaishou.js"
 	},
 	{
 		"author": "inu1255",
 		"name": "钉钉打卡",
 		"minApk": 10503,
-		"updateURL": "https://inu1255.gitee.io/q2g-plugins/dingding.js"
+		"updateURL": "https://q2g-plugins.inu1255.cn/dingding.js"
 	}
 ]

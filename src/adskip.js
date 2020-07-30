@@ -2,10 +2,10 @@
 // @author            inu1255
 // @name              广告跳过
 // @version           1.0.7
-// @namespace         https://gitee.com/inu1255/q2g-plugins
-// @settingURL        https://inu1255.gitee.io/q2g-plugins/adskip/
-// @updateURL         https://inu1255.gitee.io/q2g-plugins/adskip.js
-// @logoURL           https://inu1255.gitee.io/q2g-plugins/adskip.png
+// @namespace         https://github.com/inu1255/q2g-plugins
+// @settingURL        https://q2g-plugins.inu1255.cn/adskip/
+// @updateURL         https://q2g-plugins.inu1255.cn/adskip.js
+// @logoURL           https://q2g-plugins.inu1255.cn/adskip.png
 // ==/UserScript==
 /**
  * 设置页面需要的权限

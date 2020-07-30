@@ -4,8 +4,8 @@
 // @version           1.0.2
 // @minApk            10503
 // @cronFreq          60e3
-// @namespace         https://gitee.com/inu1255/q2g-plugins
-// @updateURL         https://inu1255.gitee.io/q2g-plugins/dingding.js
+// @namespace         https://github.com/inu1255/q2g-plugins
+// @updateURL         https://q2g-plugins.inu1255.cn/dingding.js
 // ==/UserScript==
 exports.params = {
 	beg: 0,

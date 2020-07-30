@@ -2,8 +2,8 @@
 // @author            inu1255
 // @name              wifi密码复制
 // @version           1.0.0
-// @namespace         https://gitee.com/inu1255/q2g-plugins
-// @updateURL         https://inu1255.gitee.io/q2g-plugins/wificopy.js
+// @namespace         https://github.com/inu1255/q2g-plugins
+// @updateURL         https://q2g-plugins.inu1255.cn/wificopy.js
 // ==/UserScript==
 async function getpwd() {
 	if (await we.getScreenCapture()) {
