@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.0.7
+// @version           1.0.8
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip.js

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              wifi密码复制
-// @version           1.0.0
+// @version           1.0.1
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @updateURL         https://q2g-plugins.inu1255.cn/wificopy.js
 // ==/UserScript==

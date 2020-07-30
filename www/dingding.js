@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              钉钉打卡
-// @version           1.0.2
+// @version           1.0.3
 // @minApk            10503
 // @cronFreq          60e3
 // @namespace         https://github.com/inu1255/q2g-plugins
