@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              钉钉打卡
-// @version           1.0.3
+// @version           1.0.4
 // @minApk            10503
 // @cronFreq          60e3
 // @namespace         https://github.com/inu1255/q2g-plugins
@@ -88,9 +88,9 @@ async function doSign() {
 	let nodes = await waitUntil("班");
 	if (!nodes.length) throw new Error("没有找到打卡入口");
 	for (let node of nodes) {
-		if (node.text.startsWith("上班")) {
+		if (/^上班\d{2}:\d{2}/.test(node.text)) {
 			exports.params.beg = parseTime(node.text.slice(2));
-		} else if (node.text.startsWith("下班")) {
+		} else if (/^下班\d{2}:\d{2}/.test(node.text)) {
 			exports.params.end = parseTime(node.text.slice(2));
 			exports.save();
 		}
