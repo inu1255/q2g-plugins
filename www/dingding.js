@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              钉钉打卡
-// @version           1.0.4
+// @version           1.0.5
 // @minApk            10503
 // @cronFreq          60e3
 // @namespace         https://github.com/inu1255/q2g-plugins
@@ -134,6 +134,15 @@ async function sign() {
 		await we.swape("up");
 		await we.sleep(1e3);
 		await we.swape("right");
+	}
+	let info = await we.deviceInfo();
+	if (/xiaomi/.test(info.brand)) {
+		if ((await we.getCurrentPackage()) != "cn.inu1255.quan2go") {
+			await we.performGlobalAction(2);
+			await we.performGlobalAction(2);
+			await we.sleep(500);
+			await we.clickByText("券二狗");
+		}
 	}
 	await we.open("com.alibaba.android.rimet");
 	await tryN(
