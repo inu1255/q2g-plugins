@@ -1,0 +1,27 @@
+component: website # (必填) 引用 component 的名称，当前用到的是 tencent-website 组件
+org: inu1255 # (可选) 用于记录组织信息，默认值为您的腾讯云账户 APPID
+app: quan2go # (可选) 该 website 应用名称
+name: q2g-plugins # (必填) 该 website 组件创建的实例名称
+stage: dev # (可选) 用于区分环境信息，默认值是 dev
+
+inputs:
+  src:
+    src: ./
+    hook: echo "ok"
+    dist: ./www
+    # index: index.html
+    # hook: npm run build
+    # websitePath: ./
+  region: ap-guangzhou
+  bucketName: q2g-plugins
+  protocol: https
+  hosts:
+    - host: q2g-plugins.inu1255.cn # 希望配置的自定义域名
+      autoRefresh: true
+      refreshCdn:
+        - ./
+      https:
+        switch: on
+        http2: off
+        certInfo:
+          certId: 'fEonuuWT'

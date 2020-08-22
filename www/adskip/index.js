@@ -1,117 +1,118 @@
-const router = new VueRouter({
-	mode: "hash",
-	routes: [
-		{
-			path: "/",
-			name: "home",
-		},
-		{
-			path: "/adpkg",
-			name: "adpkg",
-		},
-	],
-});
-const {date} = Quasar;
-Vue.use(VueRouter);
-new Vue({
-	el: "#app",
-	router: router,
-	data: function () {
-		return {
-			total: 0,
-			// home
-			apps_: [],
-			params: null,
-			// adpkg
-			pkg: {},
-			cls: {},
-			idx: -1,
-		};
-	},
-	computed: {
-		apps() {
-			if (!this.params) return [];
-			let ad = this.params.ad_setting;
-			let whites = this.params.white_list;
-			let total = 0;
-			let list = this.apps_
-				.map((x) => {
-					x._skipCnt = 0;
-					x._last = 0;
-					x._idx = whites.indexOf(x.pkg);
-					x._skip = 0;
-					x._hasAD = 0;
-					let pkg = ad[x.pkg];
-					if (!pkg) return x;
-					for (let k in pkg) {
-						let v = pkg[k];
-						if (v.skip == 1) x._skip++;
-						x._hasAD = 1;
-						x._skipCnt += v.cnt;
-						x._last = Math.max(x._last, v.last);
-					}
-					total += x._skipCnt;
-					return x;
-				})
-				.sort((a, b) => {
-					var t = b._last - a._last;
-					if (t) return t;
-					var t = b._hasAD - a._hasAD;
-					if (t) return t;
-					return b._idx - a._idx;
-				});
-			this.total = total;
-			return list;
+// ==UserScript==
+// @author            inu1255
+// @name              广告跳过
+// @version           1.0.9
+// @namespace         https://github.com/inu1255/q2g-plugins
+// @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
+// @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
+// @logoURL           https://q2g-plugins.inu1255.cn/adskip/icon.png
+// ==/UserScript==
+/**
+ * 设置页面需要的权限
+ * we.getApps
+ */
+// 初始化配置信息
+exports.params = {
+	white_list: ["android", "com.android.settings", "com.miui.home", "com.huawei.android.launcher", "cn.inu1255.adskip", "cn.inu1255.quan2go", "com.android.systemui"],
+	ad_setting: {
+		"com.sina.weibo": {
+			关闭广告共享计划: {pkg: "com.sina.weibo", cls: "关闭广告共享计划", skip: 1, cnt: 0, last: 0},
+			关闭评论区广告: {pkg: "com.sina.weibo", cls: "关闭评论区广告", skip: 1, cnt: 0, last: 0},
+			关闭关注浮窗: {pkg: "com.sina.weibo", cls: "关闭关注浮窗", skip: 2, cnt: 0, last: 0},
 		},
 	},
-	watch: {
-		"$route.query.pkg"() {
-			this.refresh();
-		},
-	},
-	methods: {
-		save() {
-			// we.close(JSON.stringify(this.params, (k, v) => (k[0] == "_" ? undefined : v)));
-			we.close(0);
-		},
-		formatDate(t) {
-			return date.formatDate(t, "YYYY-MM-DD HH:mm:ss");
-		},
-		// adpkg
-		async toggle(cls) {
-			cls = await bmob.create('ad_setting', cls)
-			if (cls.skip == 1) cls.skip = 2;
-			else cls.skip = 1;
-		},
-		async toggleSkip() {
-			let whites = this.params.white_list;
-			if (!this.white) this.white = await bmob.getOrCreate('params', { k: 'ad_white_list', v: whites }, "k")
-			if (this.idx < 0) {
-				this.idx = whites.length;
-				whites.push(this.pkg.pkg);
-			} else {
-				whites.splice(this.idx, 1);
-				this.idx = -1;
+};
+var open_at = 0; // 浮窗最后弹出时间
+var evt_at = 0; // 最近窗口切换时间
+var win;
+var params_pms;
+var html; // 弹窗html
+function onSkip(cls) {
+	if (cls) {
+		cls.cnt++;
+		cls.last = Date.now();
+		bmob.create("ad_setting", cls);
+	}
+}
+exports.getParams = function () {
+	if (params_pms) return params_pms;
+	return (params_pms = Promise.all([
+		bmob.select("ad_setting").then((list) => {
+			let ad_setting = exports.params.ad_setting;
+			for (let item of list) {
+				let pkgs = ad_setting[item.pkg] || (ad_setting[item.pkg] = {});
+				pkgs[item.cls] = item;
 			}
-			this.white.v = Array.from(whites)
-		},
-		async refresh() {
-			if (!this.$route.query.pkg) return;
-			let whites = this.params.white_list;
-			let ad = this.params.ad_setting;
-			for (let item of this.apps) {
-				if (item.pkg == this.$route.query.pkg) {
-					this.pkg = item;
-					this.cls = ad[item.pkg];
-					this.idx = whites.indexOf(item.pkg);
-					break;
+		}),
+		bmob.select("params", "k='ad_white_list'").then((list) => {
+			if (list.length) exports.params.white_list = list[0].v;
+		}),
+	]).then(() => exports.params));
+};
+exports.setParams = function () {
+	params_pms = null;
+	return exports.getParams();
+};
+/**
+ * 窗口切换时触发
+ * @param {string} pkgname
+ * @param {string} clsname
+ */
+exports.onWindowChange = async function (pkgname, clsname) {
+	if (!win) win = we.newFloatWindow("adskip");
+	let white_list = exports.params.white_list;
+	if (white_list.indexOf(pkgname) >= 0) return;
+	var t = (evt_at = Date.now()); // 如果下个窗口事件已发生，中断当前操作
+	let ad_setting = exports.params.ad_setting;
+	let n = 3;
+	do {
+		let list = await we.getNodes(1, "跳过");
+		list = list.filter((x) => !/android\.launcher$/.test(x.pkg) && x.text.length < 8);
+		if (list.length) {
+			for (let item of list) {
+				let id = item.id;
+				let pkg = ad_setting[pkgname] || (ad_setting[pkgname] = {});
+				let cls = pkg[clsname] || (pkg[clsname] = {pkg: pkgname, cls: clsname, skip: 0, cnt: 0, last: 0});
+				if (cls.skip == 1) we.clickById(id).then((x) => x && onSkip(cls));
+				else if (cls.skip == 0) {
+					open_at = Date.now();
+					setTimeout(function () {
+						if (open_at + 2900 < Date.now()) win.close();
+					}, 3e3);
+					console.log(item);
+					if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
+					let skip = html ? await win.open({data: html}) : null;
+					if (typeof skip === "number") {
+						if (skip) cls.skip = skip;
+						if (skip == 1) we.clickById(id).then((x) => x && onSkip(cls));
+						else if (skip) onSkip();
+					}
 				}
 			}
-		},
-	},
-	mounted: function () {
-		this.params = JSON.parse(we.getParams());
-		this.refresh();
-		we.getApps(1).then((apps) => (this.apps_ = apps));
-	},
-});
+			n = -1255;
+			break;
+		}
+		await we.sleep(1e3);
+	} while (--n > 0 && t >= evt_at);
+	if (n > -1) console.log(pkgname, "没有广告");
+};
+
+/**
+ * 窗口内容变化时触发
+ * @param {string} pkg
+ * @param {string} cls
+ */
+exports.onContentChange = async function (pkg, cls) {
+	if (!win) win = we.newFloatWindow("adskip");
+	if (pkg != "com.sina.weibo" || cls != "com.sina.weibo.feed.DetailWeiboActivity") return;
+	let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
+	if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
+	if (sina_weibo["关闭评论区广告"].skip == 1)
+		await we
+			.clickByView("com.sina.weibo:id/ll_close")
+			.then(function (ok) {
+				if (ok) return we.clickByText("不感兴趣");
+			})
+			.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
+	if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
+};

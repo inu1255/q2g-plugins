@@ -3,7 +3,7 @@
 		"author": "inu1255",
 		"name": "广告跳过",
 		"logoURL": "https://q2g-plugins.inu1255.cn/adskip.png",
-		"updateURL": "https://q2g-plugins.inu1255.cn/adskip.js"
+		"updateURL": "https://q2g-plugins.inu1255.cn/adskip/index.js"
 	},
 	{
 		"author": "inu1255",
@@ -14,6 +14,12 @@
 		"author": "inu1255",
 		"name": "快手刷金币",
 		"updateURL": "https://q2g-plugins.inu1255.cn/kuaishou.js"
+	},
+	{
+		"author": "inu1255",
+		"name": "淘宝抢免单",
+		"minApk": 10505,
+		"updateURL": "https://q2g-plugins.inu1255.cn/freetaobao/index.js"
 	},
 	{
 		"author": "inu1255",

@@ -13,6 +13,7 @@ declare let m_watchDB: any;
 declare let m_watchLocal: any;
 declare class We {
     config: WeConfig;
+    ver: WeVer;
     constructor();
     get v8(): any;
     on(type: string, cb: (data: {
@@ -29,6 +30,7 @@ declare class We {
     }) => void): void;
     offAll(): Promise<any>;
     request(url: string, method: string, data?: any, headers?: any): Promise<any>;
+    playSound(url: string, leftVolume: number, rightVolume: number, priority: number, loop: number, rate: number): Promise<number>;
     ajax(url: string, method: string, data?: any, config?: any): Promise<any>;
     get(url: string, data?: any, config?: any): Promise<any>;
     post(url: string, data?: any, config?: any): Promise<any>;
@@ -57,7 +59,7 @@ declare class We {
      * @param {number} mode 0x01 广播给前端 0x02 广播给后台
      */
     emit(data: string, mode: number): Promise<any>;
-    emitData(type: string, data?: any): Promise<unknown>;
+    emitData(type: string, data?: any): Promise<any>;
     checkNetwork(): Promise<any>;
     getIp(): Promise<any>;
     deviceID(): Promise<string>;
@@ -107,8 +109,9 @@ declare class We {
     getApk(pkgname: string): any;
     getAppSign(pkgname: string, algorithm?: "MD5" | "SHA1"): any;
     md5(s: string, algorithm: string): any;
-    clickXY(x: number, y: number, duration?: number): any;
+    clickXY(x: number, y: number, duration?: number): Promise<number>;
     openAccessibilitySetting(): any;
+    exit(code?: number): any;
     isAccessibilitySettingsOn(): any;
     disableAccessibility(): any;
     printTree(): any;
@@ -170,12 +173,16 @@ declare class We {
      * @param {number} duration
      */
     dispatchGesture(paths: string, startTime: number, duration: number): any;
-    swape(direction: "up" | "right" | "left" | "down"): Promise<any>;
+    swape(direction: "up" | "right" | "left" | "down", duration: number): Promise<any>;
     sendNotification(title: string, text: string, json: any): any;
     notificationCancel(id: string): any;
     isNotificationEnabled(): any;
     openNotificationSetting(): any;
-    screenSize(): Promise<Point>;
+    screenSize(): Promise<Point & {
+        h: number;
+        f: number;
+        dpi: number;
+    }>;
     /**
      * @param {number} [flag] 0:全部 1:用户 2:系统
      */
@@ -316,6 +323,13 @@ interface WeConfig {
     dev: boolean;
     /** 是否在线 */
     online: boolean;
+}
+interface WeVer {
+    appVersion: string;
+    buildVersion: string;
+    previousWebVersion: string;
+    readyToInstallWebVersion: string;
+    currentWebVersion: string;
 }
 interface Point {
     x: number;

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+		<title></title>
+		<link href="https://at.alicdn.com/t/font_1259149_urxjfogncgd.css" rel="stylesheet" type="text/css" />
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@^5.0.0/css/materialdesignicons.min.css" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/animate.css@^3.5.2/animate.min.css" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.min.css" rel="stylesheet" type="text/css" />
+		<style>
+			#app {
+				opacity: 0;
+			}
+			.mobile #app {
+				opacity: 1;
+			}
+			body {
+				background: #fff;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue-router/dist/vue-router.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/vuex@3.4.0/dist/vuex.min.js"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/axios@0.19.2/dist/axios.min.js"></script> -->
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/lang/zh-hans.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/icon-set/mdi-v4.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/hydrogen-js-sdk@2.2.4/dist/Bmob-2.2.4.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script> -->
+		<noscript>
+			<strong>We're sorry but quan2go-web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+		</noscript>
+		<div id="app">
+			<q-layout>
+				<q-header elevated>
+					<q-toolbar class="bg-white text-black">
+						<q-toolbar-title>淘宝抢免单设置</q-toolbar-title>
+						<q-btn flat dense @click="save()">保存</q-btn>
+					</q-toolbar>
+				</q-header>
+				<q-page-container>
+					<q-list>
+						<q-item>
+							<q-checkbox label="启用提示音" v-model="params.sound"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-input label="价格上限,低于此价格才抢" v-model="params.max" type="number" prefix="¥"></q-input>
+						</q-item>
+						<q-item>
+							<q-item-section>
+								<q-item-label>关键词过滤</q-item-label>
+								<q-item-label caption>包含关键词的不抢,支持正则</q-item-label>
+							</q-item-section>
+							<q-item-section side>
+								<q-btn @click="params.filter.unshift('')" flat dense color="primary">添加关键词</q-btn>
+							</q-item-section>
+						</q-item>
+						<q-item-label header v-show="params.msg">最近免单标题:{{params.msg}}</q-item-label>
+						<q-item v-for="(x,i) in params.filter" :key="i" class="q-py-none">
+							<q-input v-model="params.filter[i]" dense class="full-width">
+								<template v-slot:append>
+									<q-btn round dense flat icon="close" @click="params.filter.splice(i,1)" />
+								</template>
+							</q-input>
+						</q-item>
+					</q-list>
+				</q-page-container>
+			</q-layout>
+		</div>
+		<script src="setting.js"></script>
+	</body>
+</html>
