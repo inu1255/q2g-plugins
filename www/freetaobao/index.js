@@ -1,22 +1,24 @@
 // ==UserScript==
 // @author            inu1255
 // @name              淘宝抢免单
-// @version           1.0.0
+// @version           1.0.1
 // @minApk            10505
 // @cronFreq          1e3
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @updateURL         https://q2g-plugins.inu1255.cn/freetaobao/index.js
+// @readmeURL         https://q2g-plugins.inu1255.cn/freetaobao/README.md
 // @settingURL        https://q2g-plugins.inu1255.cn/freetaobao/setting.html
 // ==/UserScript==
 exports.params = {
 	max: 0.4,
 	filter: ["充1话费老", "人教版"],
 	sound: false, // 启用提示音
-	msg: "",
+	msg: "", // 最近免单
 };
 let prev; // 上次领取的口令
 let prevAt = 0; // 上次查询时间
 let nextDt = 1e3; // 下次查询间隔
+let logs = "";
 
 async function tryN(n, fn) {
 	var ok;
@@ -84,17 +86,26 @@ async function open(key, title) {
 	return ok;
 }
 
+exports.getLogs = function () {
+	return logs;
+};
+
 exports.onTime = async function () {
 	if (Date.now() < prevAt + nextDt) return;
 	prevAt = Date.now();
 	if (!(await we.isScreenOn())) return; // 熄屏时跳过
-	let text = await we.get("http://md.afxwl.com/", null, {ignore: true});
+	let text = await we.get("http://md.afxwl.com/", null, { ignore: true });
 	let m = /￥\w+￥/.exec(text);
 	if (!m) return console.error("没有定位到免单商品");
 	let taobaokouling = m[0];
 	// 过滤重复免单
 	if (prev == taobaokouling) {
 		nextDt = Math.floor(Math.random() * 3e3);
+		logs = "";
+		text.replace(/goodstitle:'([^']+)'/g, function (x0, x1) {
+			logs += "1. " + x1.replace(/\[CQ[^\]]+\]/g, "") + "\n";
+		});
+		if (logs) logs = "#### 最近免单\n" + logs;
 		return;
 	}
 	if (!prev) prev = taobaokouling;
@@ -108,7 +119,7 @@ exports.onTime = async function () {
 	}
 	// 过滤价格
 	let price = 0;
-	m = /(\d\.)?\d元/.exec(title);
+	m = /(\d+\.)?\d+元/.exec(title);
 	if (m) price = parseFloat(m[0]);
 	if (price > exports.params.max) {
 		console.log(title, `价格太高${price}>${exports.params.max}`);
