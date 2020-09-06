@@ -3,19 +3,22 @@ new Vue({
 	el: "#app",
 	data: function () {
 		return {
-			params: {filter:[]},
+			params: {
+				max: 0.4,
+				filter: ["充1话费老", "人教版"],
+				sound: false, // 启用提示音
+				msg: "", // 最近免单
+			},
 		};
 	},
-	computed: {
-	},
-	watch: {
-	},
+	computed: {},
+	watch: {},
 	methods: {
 		save() {
 			we.close(JSON.stringify(this.params, (k, v) => (k[0] == "_" ? undefined : v)));
 		},
 	},
 	mounted: function () {
-		this.params = JSON.parse(we.getParams());
+		this.params = Object.assign({}, this.params, JSON.parse(we.getParams()));
 	},
 });
