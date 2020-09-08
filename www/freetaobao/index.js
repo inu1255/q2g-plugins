@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              淘宝抢免单
-// @version           1.0.4
+// @version           1.0.7
 // @minApk            10505
 // @cronFreq          1e3
 // @namespace         https://github.com/inu1255/q2g-plugins
@@ -31,8 +31,10 @@ async function tryN(n, fn, nocheck) {
 }
 
 async function open(key, title) {
-	prev = key;
-	exports.params.msg = title;
+	if (title) {
+		prev = key;
+		exports.params.msg = title;
+	}
 	if ((await we.getCurrentPackage()) === "com.taobao.taobao") {
 		await we.performGlobalAction(2);
 		await we.sleep(800);
@@ -98,8 +100,22 @@ async function open(key, title) {
 		});
 	}
 	if (ok) console.log(`福利价${price}`, ok);
-	return ok;
+	if (typeof ok == "string") {
+		await we.performGlobalAction(1);
+		await we.toast(ok);
+		await we.sleep(500);
+		await we.performGlobalAction(3);
+		await we.sleep(500);
+		await we.performGlobalAction(3);
+	} else if (ok) {
+		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
+	}
 }
+
+exports.run = function (key) {
+	if (!key) return;
+	return open(key);
+};
 
 exports.getLogs = function () {
 	return logs;
@@ -161,15 +177,5 @@ exports.onTime = async function () {
 		)
 			return;
 	}
-	let msg = await open(taobaokouling, title);
-	if (typeof msg == "string") {
-		await we.performGlobalAction(1);
-		await we.toast(msg);
-		await we.sleep(500);
-		await we.performGlobalAction(3);
-		await we.sleep(500);
-		await we.performGlobalAction(3);
-	} else if (msg) {
-		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
-	}
+	await open(taobaokouling, title);
 };
