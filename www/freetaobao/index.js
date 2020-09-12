@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              淘宝抢免单
-// @version           1.0.7
+// @version           1.0.8
 // @minApk            10505
 // @cronFreq          1e3
 // @namespace         https://github.com/inu1255/q2g-plugins
@@ -13,6 +13,7 @@ exports.params = {
 	max: 0.4,
 	filter: ["充1话费老", "人教版"],
 	sound: false, // 启用提示音
+	autoClick: true, // 自动点击领取
 	msg: "", // 最近免单
 };
 let prev; // 上次领取的口令
@@ -35,7 +36,8 @@ async function open(key, title) {
 		prev = key;
 		exports.params.msg = title;
 	}
-	if ((await we.getCurrentPackage()) === "com.taobao.taobao") {
+	let taobaoOpened = (await we.getCurrentPackage()) === "com.taobao.taobao";
+	if (taobaoOpened) {
 		await we.performGlobalAction(2);
 		await we.sleep(800);
 	}
@@ -72,7 +74,7 @@ async function open(key, title) {
 			if (price > exports.params.max) {
 				return `福利价${couponPrice}>${exports.params.max}`;
 			} else {
-				await we.clickById(btn.id);
+				if (exports.params.autoClick) await we.clickById(btn.id);
 				return true;
 			}
 		}
@@ -80,7 +82,7 @@ async function open(key, title) {
 			if (couponPrice > exports.params.max) {
 				return `券后价${couponPrice}>${exports.params.max}`;
 			} else {
-				await we.clickById(btn.id);
+				if (exports.params.autoClick) await we.clickById(btn.id);
 				return true;
 			}
 		}
@@ -104,9 +106,12 @@ async function open(key, title) {
 		await we.performGlobalAction(1);
 		await we.toast(ok);
 		await we.sleep(500);
-		await we.performGlobalAction(3);
-		await we.sleep(500);
-		await we.performGlobalAction(3);
+		if (!taobaoOpened) {
+			// 之前不是打开的淘宝，则切换上个应用
+			await we.performGlobalAction(3);
+			await we.sleep(200);
+			await we.performGlobalAction(3);
+		}
 	} else if (ok) {
 		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
 	}

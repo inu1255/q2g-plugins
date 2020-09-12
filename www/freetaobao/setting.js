@@ -7,6 +7,7 @@ new Vue({
 				max: 0.4,
 				filter: ["充1话费老", "人教版"],
 				sound: false, // 启用提示音
+				autoClick: true, // 自动点击领取
 				msg: "", // 最近免单
 			},
 		};

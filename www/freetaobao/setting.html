@@ -50,6 +50,9 @@
 							<q-checkbox label="启用提示音" v-model="params.sound"></q-checkbox>
 						</q-item>
 						<q-item>
+							<q-checkbox label="自动点击领取" v-model="params.autoClick"></q-checkbox>
+						</q-item>
+						<q-item>
 							<q-input label="价格上限,低于此价格才抢" v-model="params.max" type="number" prefix="¥"></q-input>
 						</q-item>
 						<q-item>

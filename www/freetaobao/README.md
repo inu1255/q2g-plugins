@@ -7,7 +7,7 @@
 4. 领取成功后需要您手动下单🥺
 
 #### 注意
-1. <font color="red">手机锁屏后无法正常工作</font>
+1. <font color="red">设置中开启语音,手机锁屏后有免单会有语音提示</font>
 2. <font color="red">此类商品无返利</font>
-3. <font color="red">抢免单跟网络和手机性能有关</font>
+3. <font color="red">新增设置项`是否自动领取`</font>
 
