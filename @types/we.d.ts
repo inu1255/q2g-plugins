@@ -1,5 +1,6 @@
 declare const __we: any;
 declare const cordova: any;
+declare const chcp: any;
 declare let events: {};
 declare let eventCache: {};
 declare function callEvent(type: string, data: {
@@ -29,6 +30,9 @@ declare class We {
         data?: any;
     }) => void): void;
     offAll(): Promise<any>;
+    bonjourFind(type?: string): any;
+    bonjourStop(): any;
+    newWS(url: string, key?: string, ms?: number): Promise<WS>;
     request(url: string, method: string, data?: any, headers?: any): Promise<any>;
     playSound(url: string, leftVolume: number, rightVolume: number, priority: number, loop: number, rate: number): Promise<number>;
     ajax(url: string, method: string, data?: any, config?: any): Promise<any>;
@@ -59,7 +63,7 @@ declare class We {
      * @param {number} mode 0x01 广播给前端 0x02 广播给后台
      */
     emit(data: string, mode: number): Promise<any>;
-    emitData(type: string, data?: any): Promise<any>;
+    emitData(type: string, data?: any): Promise<unknown>;
     checkNetwork(): Promise<any>;
     getIp(): Promise<any>;
     deviceID(): Promise<string>;
@@ -124,7 +128,6 @@ declare class We {
      */
     findSubText(text: string, maxLen?: number): Promise<AccessibilityNode[]>;
     getCurrentPackage(): Promise<string>;
-    getCurrentWindow(): Promise<string>;
     /**
      * findAccessibilityNodeInfosByText 匹配的全部点击
      * @param {string} text
@@ -183,6 +186,7 @@ declare class We {
         f: number;
         dpi: number;
     }>;
+    getIPLocal(): any;
     /**
      * @param {number} [flag] 0:全部 1:用户 2:系统
      */
@@ -214,10 +218,7 @@ declare class We {
     destroyFloatWindow(key: string, msg?: any): Promise<any>;
     evalFloatWindow(key: string, code: string): Promise<any>;
     /** 关闭时返回 */
-    openLink(url: string, opts: OpenLinkOptions): Promise<{
-        onclose: Promise<any>;
-        eval: (code: string) => Promise<any>;
-    }>;
+    openLink(url: string, opts?: OpenLinkOptions): Promise<ReturnType<typeof newWebActivity>>;
     webEval(no: string, code: string): any;
     getAllWebs(): any;
     checkMoveTop(): Promise<any>;
@@ -236,8 +237,8 @@ declare class We {
      * @param cookie name=value
      */
     setCookie(url: string, cookie: string): Promise<any>;
+    setCookies(url: string, cookies: string): any;
     getCookie(url: string): Promise<any>;
-    getCookies(url: string): Promise<any>;
     /**
      * @param {boolean} [light] 状态栏亮色模式
      */
@@ -276,8 +277,38 @@ declare class We {
     pluginCompile<T>(code: string): QPlugin<T>;
     readonly<T>(obj: T): T;
 }
+declare class WS {
+    key: string;
+    constructor(key: string);
+    on(cb: (data: {
+        type: string;
+        data?: any;
+    }) => void): void;
+    once(cb?: (data: {
+        type: string;
+        data?: any;
+    }) => unknown): Promise<unknown>;
+    off(cb: (data: {
+        type: string;
+        data?: any;
+    }) => void): void;
+    write(data: string, base64: boolean): any;
+    close(): any;
+}
 declare function exec(method: string, args: any[]): Promise<any>;
 declare function optJSON(def: any): (text: string) => any;
+declare function newWebActivity(no: string): {
+    onclose: Promise<unknown>;
+    eval: (code: string) => any;
+    on(type: string, cb: (data: {
+        type: string;
+        data?: any;
+    }) => void): void;
+    once(type: string, cb?: (data: {
+        type: string;
+        data?: any;
+    }) => void): Promise<void>;
+};
 declare const we: We;
 interface FloatWindowOptions {
     x?: number;
