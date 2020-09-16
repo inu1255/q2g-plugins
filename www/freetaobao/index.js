@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              淘宝抢免单
-// @version           1.0.10
+// @version           1.1.0
 // @minApk            10505
 // @cronFreq          1e3
 // @namespace         https://github.com/inu1255/q2g-plugins
@@ -132,9 +132,58 @@ exports.onTime = async function () {
 	if (!(await we.isScreenOn())) {
 		if (!(exports.params.sound && we.playSound)) return;
 	}
+	let list = await we.get("material/freetaobao", null, {ignore: true});
+	let first = list[0];
+	let taobaokouling = first.word;
+	// 过滤重复免单
+	logs = "";
+	for (let item of list) {
+		logs += "1. " + item.title + " @ " + item.price + "元(" + item.word.slice(1, -1) + ")\n";
+	}
+	if (logs) logs = "#### 最近免单\n" + logs;
+	if (prev == taobaokouling) {
+		nextDt = Math.floor(Math.random() * 3e3);
+		return;
+	}
+	if (!prev) prev = taobaokouling;
+	// 过滤标题关键词
+	let title = first.title;
+	try {
+		if (exports.params.filter && exports.params.filter.length && new RegExp(exports.params.filter.join("|")).test(title)) return;
+	} catch (error) {
+		console.log("过滤出错", error);
+	}
+	// 过滤价格
+	let price = first.price;
+	if (price > exports.params.max) {
+		console.log(title, `价格太高${price}>${exports.params.max}`);
+		return;
+	}
+	// 过滤老订单
+	let time = first.time;
+	if (time < Date.now() - 30e3) return console.log(title, `肯定抢完了`);
+	nextDt = 5e3;
+	if (!(await we.isScreenOn())) {
+		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
+		if (
+			!(await tryN(
+				4,
+				() => {
+					return we.isScreenOn();
+				},
+				true
+			))
+		)
+			return;
+	}
+	await open(taobaokouling, title);
+	return;
 	if (we.ver.buildVersion < 10508) {
 		return onTime10507();
 	}
+};
+
+async function onTime10508() {
 	let ws = await we.newWS("ws://154.8.159.81:8888/");
 	let {data} = await ws.once();
 	let taobaokouling;
@@ -186,7 +235,7 @@ exports.onTime = async function () {
 			return;
 	}
 	await open(taobaokouling, title);
-};
+}
 
 async function onTime10507() {
 	let text = await we.get("http://md.afxwl.com/", null, {ignore: true});
