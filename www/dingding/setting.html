@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+		<title></title>
+		<link href="https://at.alicdn.com/t/font_1259149_urxjfogncgd.css" rel="stylesheet" type="text/css" />
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/@mdi/font@^5.0.0/css/materialdesignicons.min.css" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/animate.css@^3.5.2/animate.min.css" rel="stylesheet" type="text/css" />
+		<link href="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.min.css" rel="stylesheet" type="text/css" />
+		<style>
+			#app {
+				opacity: 0;
+			}
+			.mobile #app {
+				opacity: 1;
+			}
+			body {
+				background: #fff;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue-router/dist/vue-router.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/vuex@3.4.0/dist/vuex.min.js"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/axios@0.19.2/dist/axios.min.js"></script> -->
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/quasar.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/lang/zh-hans.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/quasar@1.11.3/dist/icon-set/mdi-v4.umd.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/hydrogen-js-sdk@2.2.4/dist/Bmob-2.2.4.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script> -->
+		<noscript>
+			<strong>We're sorry but quan2go-web doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+		</noscript>
+		<div id="app">
+			<q-layout>
+				<q-header elevated>
+					<q-toolbar class="bg-white text-black">
+						<q-toolbar-title>钉钉签到设置</q-toolbar-title>
+						<q-btn flat dense @click="save()">保存</q-btn>
+					</q-toolbar>
+				</q-header>
+				<q-page-container>
+					<q-list>
+						<q-item>
+							<q-input label="上班时间" mask="##:##" :value="beg" @change="params.beg=fromTime($event)"></q-input>
+						</q-item>
+						<q-item>
+							<q-input label="下班时间" mask="##:##" :value="end" @change="params.end=fromTime($event)"></q-input>
+						</q-item>
+						<q-item>
+							<q-input label="下次打卡" :value="nextAt" readonly></q-input>
+						</q-item>
+						<q-item>
+							<q-checkbox label="到点自动打卡" v-model="params.auto"></q-checkbox>
+						</q-item>
+						<q-item-label header>周几打卡</q-item-label>
+						<q-item>
+							<q-checkbox label="周一" :value="!!params.weeks[1]" @input="params.weeks[1]=+$event"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-checkbox label="周二" :value="!!params.weeks[2]" @input="params.weeks[2]=+$event"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-checkbox label="周三" :value="!!params.weeks[3]" @input="params.weeks[3]=+$event"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-checkbox label="周四" :value="!!params.weeks[4]" @input="params.weeks[4]=+$event"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-checkbox label="周五" :value="!!params.weeks[5]" @input="params.weeks[5]=+$event"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-checkbox label="周六" :value="!!params.weeks[6]" @input="params.weeks[6]=+$event"></q-checkbox>
+						</q-item>
+						<q-item>
+							<q-checkbox label="周日" :value="!!params.weeks[0]" @input="params.weeks[0]=+$event"></q-checkbox>
+						</q-item>
+					</q-list>
+				</q-page-container>
+			</q-layout>
+		</div>
+		<script src="setting.js"></script>
+	</body>
+</html>

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              淘宝抢免单
-// @version           1.1.0
+// @version           1.1.2
 // @minApk            10505
 // @cronFreq          1e3
 // @namespace         https://github.com/inu1255/q2g-plugins
@@ -112,8 +112,6 @@ async function open(key, title) {
 			await we.sleep(200);
 			await we.performGlobalAction(3);
 		}
-	} else if (ok) {
-		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
 	}
 }
 
@@ -145,7 +143,6 @@ exports.onTime = async function () {
 		nextDt = Math.floor(Math.random() * 3e3);
 		return;
 	}
-	if (!prev) prev = taobaokouling;
 	// 过滤标题关键词
 	let title = first.title;
 	try {
@@ -161,132 +158,12 @@ exports.onTime = async function () {
 	}
 	// 过滤老订单
 	let time = first.time;
-	if (time < Date.now() - 30e3) return console.log(title, `肯定抢完了`);
-	nextDt = 5e3;
+	if (time < Date.now() - 30e3) return;
 	if (!(await we.isScreenOn())) {
 		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
-		if (
-			!(await tryN(
-				4,
-				() => {
-					return we.isScreenOn();
-				},
-				true
-			))
-		)
-			return;
+		nextDt = 1e3;
+		return;
 	}
+	nextDt = 5e3;
 	await open(taobaokouling, title);
-	return;
-	if (we.ver.buildVersion < 10508) {
-		return onTime10507();
-	}
 };
-
-async function onTime10508() {
-	let ws = await we.newWS("ws://154.8.159.81:8888/");
-	let {data} = await ws.once();
-	let taobaokouling;
-	let first = data[0];
-	first.text.replace(/\(([^\)]+)\)/, function (x0, x1) {
-		taobaokouling = `¥${x1}¥`;
-		return "";
-	});
-	logs = "";
-	for (let item of data) {
-		logs += "1. " + item.text.replace(/<br\/>/g, " ").replace(/\[CQ[^\]]+\]/g, "") + "\n";
-	}
-	if (logs) logs = "#### 最近免单\n" + logs;
-	if (prev == taobaokouling) {
-		nextDt = Math.floor(Math.random() * 3e3);
-		return;
-	}
-	if (!prev) prev = taobaokouling;
-	// 过滤标题关键词
-	let title = first.text;
-	try {
-		if (exports.params.filter && exports.params.filter.length && new RegExp(exports.params.filter.join("|")).test(title)) return;
-	} catch (error) {
-		console.log("过滤出错", error);
-	}
-	// 过滤价格
-	let price = 0;
-	let m = /(\d+\.)?\d+元/.exec(title);
-	if (m) price = parseFloat(m[0]);
-	if (price > exports.params.max) {
-		console.log(title, `价格太高${price}>${exports.params.max}`);
-		return;
-	}
-	// 过滤老订单
-	let time = new Date(first.seedTime).getTime();
-	if (time < Date.now() - 30e3) return console.log(title, `肯定抢完了`);
-	nextDt = 5e3;
-	if (!(await we.isScreenOn())) {
-		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
-		if (
-			!(await tryN(
-				4,
-				() => {
-					return we.isScreenOn();
-				},
-				true
-			))
-		)
-			return;
-	}
-	await open(taobaokouling, title);
-}
-
-async function onTime10507() {
-	let text = await we.get("http://md.afxwl.com/", null, {ignore: true});
-	let m = /￥\w+￥/.exec(text);
-	if (!m) return console.error("没有定位到免单商品");
-	let taobaokouling = m[0];
-	// 过滤重复免单
-	logs = "";
-	text.replace(/goodstitle:'([^']+)'/g, function (x0, x1) {
-		logs += "1. " + x1.replace(/\[CQ[^\]]+\]/g, "") + "\n";
-	});
-	if (logs) logs = "#### 最近免单\n" + logs;
-	if (prev == taobaokouling) {
-		nextDt = Math.floor(Math.random() * 3e3);
-		return;
-	}
-	if (!prev) prev = taobaokouling;
-	// 过滤标题关键词
-	m = /goodstitle:'([^']+)'/.exec(text);
-	let title = (m && m[1]) || "";
-	try {
-		if (exports.params.filter && exports.params.filter.length && new RegExp(exports.params.filter.join("|")).test(title)) return;
-	} catch (error) {
-		console.log("过滤出错", error);
-	}
-	// 过滤价格
-	let price = 0;
-	m = /(\d+\.)?\d+元/.exec(title);
-	if (m) price = parseFloat(m[0]);
-	if (price > exports.params.max) {
-		console.log(title, `价格太高${price}>${exports.params.max}`);
-		return;
-	}
-	// 过滤老订单
-	m = /posttime:'([^']+)'/.exec(text);
-	let time = 0;
-	if (m) time = new Date(m[1].replace(/(\d+)\D(\d+)\D(\d+)\D(\d+)\D(\d+)\D(\d+)\D/g, "$1-$2-$3 $4:$5:$6")).getTime();
-	if (time < Date.now() - 30e3) return console.log(title, `肯定抢完了`);
-	nextDt = 5e3;
-	if (!(await we.isScreenOn())) {
-		if (exports.params.sound && we.playSound) we.playSound("http://md.afxwl.com/b.mp3");
-		if (
-			!(await tryN(
-				4,
-				() => {
-					return we.isScreenOn();
-				},
-				true
-			))
-		)
-			return;
-	}
-	await open(taobaokouling, title);
-}

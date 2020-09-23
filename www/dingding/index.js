@@ -1,16 +1,20 @@
 // ==UserScript==
 // @author            inu1255
 // @name              钉钉打卡
-// @version           1.0.5
+// @version           1.0.6
 // @minApk            10503
 // @cronFreq          60e3
 // @namespace         https://github.com/inu1255/q2g-plugins
-// @updateURL         https://q2g-plugins.inu1255.cn/dingding.js
+// @updateURL         https://q2g-plugins.inu1255.cn/dingding/index.js
+// @readmeURL         https://q2g-plugins.inu1255.cn/dingding/README.md
+// @settingURL        https://q2g-plugins.inu1255.cn/dingding/setting.html
 // ==/UserScript==
 exports.params = {
 	beg: 0,
 	end: 0,
 	nextAt: 0,
+	auto: false, // 到点自动打卡
+	weeks: [0, 1, 1, 1, 1, 1, 0], // 周几要打卡
 };
 
 let appset = new Set(["com.huawei.android.launcher", "com.alibaba.android.rimet"]);
@@ -79,8 +83,12 @@ async function gotoCompany() {
 
 async function gotoSign() {
 	let nodes = await waitUntil("考勤打卡");
+	nodes = nodes.filter((x) => x.bottom - x.top > 10);
 	if (!nodes.length) throw new Error("没有找到考勤打卡入口");
-	await we.clickById(nodes[nodes.length - 1].id);
+	for (let node of nodes.slice(-1)) {
+		await we.clickById(node.id);
+		await we.clickById(node.id - 1);
+	}
 }
 
 async function doSign() {
@@ -97,7 +105,7 @@ async function doSign() {
 	}
 	if (!exports.params.beg || !exports.params.end) throw new Error("没有识别到打卡时间");
 	let now = timeNow();
-	if (now > exports.params.beg && now < exports.params.end) throw new Error("不在考勤范围内");
+	if (now > exports.params.beg && now < exports.params.end) throw new Error("没到打卡时间");
 	// 识别打卡按钮
 	nodes = await waitUntil("打卡");
 	if (!nodes.length) throw new Error("没有识别到打卡按钮");
@@ -128,22 +136,21 @@ async function doSign() {
 }
 
 async function sign() {
-	console.log("sign");
 	if (!(await we.isScreenOn())) {
 		await we.wakeup();
 		await we.swape("up");
 		await we.sleep(1e3);
 		await we.swape("right");
 	}
-	let info = await we.deviceInfo();
-	if (/xiaomi/.test(info.brand)) {
-		if ((await we.getCurrentPackage()) != "cn.inu1255.quan2go") {
-			await we.performGlobalAction(2);
-			await we.performGlobalAction(2);
-			await we.sleep(500);
-			await we.clickByText("券二狗");
-		}
-	}
+	// let info = await we.deviceInfo();
+	// if (/xiaomi/.test(info.brand)) {
+	// 	if ((await we.getCurrentPackage()) != "cn.inu1255.quan2go") {
+	// 		await we.performGlobalAction(2);
+	// 		await we.performGlobalAction(2);
+	// 		await we.sleep(500);
+	// 		await we.clickByText("券二狗");
+	// 	}
+	// }
 	await we.open("com.alibaba.android.rimet");
 	await tryN(
 		5,
@@ -154,7 +161,7 @@ async function sign() {
 	);
 	await gotoCompany();
 	await gotoSign();
-	await doSign();
+	await doSign().catch();
 }
 
 function parseTime(t) {
@@ -163,19 +170,19 @@ function parseTime(t) {
 }
 
 exports.onTime = async function () {
-	let now = timeNow();
+	// 已经打卡
+	if (Date.now() < exports.params.nextAt) return console.log("已打卡");
 	let week = new Date().getDay();
 	// 不是周1~周5
 	if (week < 1 || week > 5) return console.log("周1到周5才打卡");
-	// 提前15分钟打卡
-	if (now < exports.params.beg - 15) return console.log("离上班不到15分钟");
-	// 不在打卡范围内
-	if (now > exports.params.beg && now < exports.params.end) return console.log("不在打卡范围内");
-	// 已经打卡
-	if (Date.now() < exports.params.nextAt) return console.log("已打卡");
-	await sign();
+	let now = timeNow();
+	// 没到打卡时间
+	if (now > exports.params.beg && now < exports.params.end) return console.log("没到打卡时间");
+	if (exports.params.auto) return sign();
+	return exports.setText("一键打卡");
 };
 
 exports.run = function () {
+	exports.setText("");
 	return sign();
 };
