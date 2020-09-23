@@ -93,7 +93,7 @@ async function gotoSign() {
 
 async function doSign() {
 	// 识别打卡时间
-	let nodes = await waitUntil("班");
+	let nodes = await waitUntil("班", {n: 10});
 	if (!nodes.length) throw new Error("没有找到打卡入口");
 	for (let node of nodes) {
 		if (/^上班\d{2}:\d{2}/.test(node.text)) {
@@ -161,7 +161,13 @@ async function sign() {
 	);
 	await gotoCompany();
 	await gotoSign();
-	await doSign().catch();
+	await doSign().catch(async (e) => {
+		// 之前不是打开的淘宝，则切换上个应用
+		await we.performGlobalAction(3);
+		await we.sleep(200);
+		await we.performGlobalAction(3);
+		return Promise.reject(e);
+	});
 }
 
 function parseTime(t) {
