@@ -43,7 +43,8 @@ const app = http.createServer(function (req, res) {
 		} else {
 			if (filename.endsWith(".js")) res.setHeader("Content-type", "text/javascript;charset=utf-8");
 			else if (filename.endsWith(".html")) res.setHeader("Content-type", "text/html;charset=utf-8");
-			res.end(data.replace(/https:\/\/q2g-plugins\.inu1255\.cn/gi, baseURL));
+			res.end(data);
+			// res.end(data.replace(/https:\/\/q2g-plugins\.inu1255\.cn/gi, baseURL));
 		}
 	});
 });

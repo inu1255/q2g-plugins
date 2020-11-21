@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.1.0
+// @version           1.1.1
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -14,7 +14,20 @@
 // 初始化配置信息
 
 exports.params = {
-	white_list: ["android", "com.android.settings", "com.miui.home", "com.huawei.android.launcher", "cn.inu1255.adskip", "cn.inu1255.quan2go", "com.android.systemui"],
+	white_list: [
+		"android",
+		"com.android.settings",
+		"com.miui.home",
+		"com.huawei.android.launcher",
+		"com.tencent.mm", // 微信
+		"com.iflytek.inputmethod", // 迅飞
+		"com.sohu.inputmethod.sogou", // 搜狗输入
+		"com.baidu.input", // 百度输入
+		"com.baidu.input_huawei", // 百度输入华为
+		"cn.inu1255.adskip",
+		"cn.inu1255.quan2go",
+		"com.android.systemui",
+	],
 	ad_setting: merge({
 		"com.sina.weibo": {
 			关闭广告共享计划: {pkg: "com.sina.weibo", cls: "关闭广告共享计划", skip: 1, cnt: 0, last: 0},
@@ -24,10 +37,12 @@ exports.params = {
 	}),
 };
 var open_at = 0; // 浮窗最后弹出时间
-var evt_at = 0; // 最近窗口切换时间
+var globalID = 0; // 最近窗口切换ID
+var clickAt = 0; // 上次点击时间
 var win;
 var params_pms;
 var html; // 弹窗html
+var size;
 function onSkip(cls) {
 	if (cls) {
 		cls.cnt++;
@@ -60,16 +75,48 @@ exports.setParams = function () {
  * @param {string} clsname
  */
 exports.onWindowChange = async function (pkgname, clsname) {
+	// 禁止1秒内连续点击
+	if (clickAt + 3e3 > Date.now()) return;
 	if (!win) win = we.newFloatWindow("adskip");
+	if (!size) size = await we.screenSize();
+	let h = size.y - (size.f || 0);
+	let w32 = (size.x * 2) / 3;
+	let w31 = size.x * 3;
+	let hb = h - w31;
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
-	var t = (evt_at = Date.now()); // 如果下个窗口事件已发生，中断当前操作
+	if (pkgname.startsWith("cn.inu1255")) return;
+	var currentID = ++globalID; // 如果下个窗口事件已发生，中断当前操作
+	console.log("#" + currentID, "进入", pkgname, clsname);
 	let ad_setting = exports.params.ad_setting;
-	let n = 3;
+	let n = 5;
 	do {
-		let list = await we.getNodes(1, "跳过");
-		list = list.filter((x) => !/android\.launcher$/.test(x.pkg) && x.text.length < 8);
-		if (list.length) {
+		let list = await we.getNodes();
+		let hasSkip = false;
+		let elCnt = 0;
+		list = list.filter((x) => {
+			if (x.pkg != pkgname) return false;
+			if (x.left && x.top) elCnt++;
+			if (x.left < w32 || x.bottom > w31 || x.top < hb) return false;
+			if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
+			if (/跳过|skip/i.test(x.text)) return (hasSkip = true);
+			if (x.right - x.left > 200 || x.bottom - x.top > 200) return false;
+			return true;
+		});
+		if (hasSkip) list.filter((x) => x.text);
+		// 禁止1秒内连续点击
+		if (clickAt + 3e3 > Date.now()) {
+			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
+			break;
+		}
+		if (currentID != globalID) {
+			console.log("#" + currentID, "中断", pkgname, clsname);
+			break;
+		}
+		// 有跳过按钮 或者 元素比较少
+		if ((hasSkip || elCnt < 10) && list.length) {
+			console.log("#" + currentID, elCnt, hasSkip, "OOOOO", pkgname, clsname, list);
+			clickAt = Date.now();
 			for (let item of list) {
 				let id = item.id;
 				let pkg = ad_setting[pkgname] || (ad_setting[pkgname] = {});
@@ -78,24 +125,31 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				else if (cls.skip == 0) {
 					open_at = Date.now();
 					setTimeout(function () {
-						if (open_at + 2900 < Date.now()) win.close();
-					}, 3e3);
-					console.log(item);
+						if (open_at + 9e3 < Date.now()) win.close();
+					}, 10e3);
 					if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
 					let skip = html ? await win.open({data: html}) : null;
 					if (typeof skip === "number") {
 						if (skip) cls.skip = skip;
-						if (skip == 1) we.clickById(id).then((x) => x && onSkip(cls));
-						else if (skip) onSkip();
+						if (skip == 1) {
+							we.clickById(id).then((x) => x && onSkip(cls));
+							we.toast("添加成功");
+						} else if (skip) onSkip();
 					}
+					break;
 				}
 			}
 			n = -1255;
 			break;
+		} else {
+			console.log("#" + currentID, elCnt, hasSkip, "XXXXX", pkgname, clsname, list);
 		}
 		await we.sleep(1e3);
-	} while (--n > 0 && t >= evt_at);
-	if (n > -1) console.log(pkgname, "没有广告");
+		if (currentID != globalID) {
+			console.log("#" + currentID, "中断", pkgname, clsname);
+			break;
+		}
+	} while (--n > 0);
 };
 
 /**
