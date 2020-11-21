@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.1.1
+// @version           1.1.3
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -39,6 +39,7 @@ exports.params = {
 var open_at = 0; // 浮窗最后弹出时间
 var globalID = 0; // 最近窗口切换ID
 var clickAt = 0; // 上次点击时间
+var prevPkg = ""; // 上个包
 var win;
 var params_pms;
 var html; // 弹窗html
@@ -85,8 +86,10 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let hb = h - w31;
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
-	if (pkgname.startsWith("cn.inu1255")) return;
-	var currentID = ++globalID; // 如果下个窗口事件已发生，中断当前操作
+	if (/^(com\.android|cn\.inu1255)|\.input/.test(pkgname)) return;
+	if (prevPkg == pkgname) return;
+	prevPkg = pkgname;
+	let currentID = ++globalID; // 如果下个窗口事件已发生，中断当前操作
 	console.log("#" + currentID, "进入", pkgname, clsname);
 	let ad_setting = exports.params.ad_setting;
 	let n = 5;
@@ -142,7 +145,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 			n = -1255;
 			break;
 		} else {
-			console.log("#" + currentID, elCnt, hasSkip, "XXXXX", pkgname, clsname, list);
+			console.log("#" + currentID, elCnt, hasSkip, "XXXXX", pkgname, clsname);
 		}
 		await we.sleep(1e3);
 		if (currentID != globalID) {
@@ -172,79 +175,81 @@ exports.onContentChange = async function (pkg, cls) {
 	if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 };
 function merge(ad_setting) {
-	let s = `cn.inu1255.adskip	cn.inu1255.adskip.MainActivity
-cn.kuwo.player	android.support.v7.widget.RecyclerView
-cn.kuwo.player	android.widget.FrameLayout
-cn.kuwo.player	cn.kuwo.player.activities.MainActivity
+	let s = `cn.kuwo.player	cn.kuwo.player.activities.MainActivity
 cn.kuwo.tingshu	cn.kuwo.player.activities.MainActivity
+cn.opda.a.phonoalbumshoushou	android.view.View
+cn.opda.a.phonoalbumshoushou	android.widget.RelativeLayout
 cn.soulapp.android	android.widget.FrameLayout
 cn.soulapp.android	cn.soulapp.android.ui.splash.SplashActivity
 com.alimama.moon	android.widget.FrameLayout
+com.android.bankabc	com.android.bankabc.homepage.HomeActivity
 com.android.browser	com.android.browser.BrowserActivity
 com.android.gallery3d	android.app.ProgressDialog
+com.autonavi.minimap	android.widget.FrameLayout
+com.baidu.BaiduMap	com.baidu.baidumaps.MapsActivity
 com.baidu.input	android.widget.RelativeLayout
-com.baidu.searchbox	com.baidu.browser.search.LightSearchActivity
+com.baidu.input_huawei	android.inputmethodservice.SoftInputWindow
+com.baidu.input_huawei	android.widget.FrameLayout
+com.baidu.tieba	com.baidu.tieba.LogoActivity
+com.bbk.facewake	android.widget.FrameLayout
 com.bbk.launcher2	com.bbk.launcher2.Launcher
+com.chinarainbow.tft	android.widget.FrameLayout
 com.coloros.notificationmanager	com.coloros.notificationmanager.AppNotificationSettingsActivity
 com.coloros.recents	com.android.quickstep.RecentsActivity
 com.coloros.recents	com.coloros.recents.RecentsActivity
 com.coloros.safecenter	com.coloros.safecenter.sysfloatwindow.FloatWindowListActivity
 com.coolapk.market	android.widget.FrameLayout
 com.coolapk.market	com.coolapk.market.view.splash.SplashActivity
-com.douban.frodo	android.widget.FrameLayout
-com.dragon.read	android.widget.FrameLayout
 com.guess.singer	com.daniel.popwindow.ui.WindowActivity
 com.heytap.market	com.heytap.cdo.client.detail.ui.ProductDetailActivity
 com.heytap.market	com.heytap.cdo.client.search.SearchActivity
 com.heytap.market	com.heytap.cdo.client.ui.activity.MainTabPageActivity
 com.huawei.android.internal.app	android.app.Dialog
 com.huawei.appmarket	android.widget.FrameLayout
+com.huawei.appmarket	com.huawei.appmarket.MainActivity
 com.huawei.browser	com.huawei.browser.BrowserMainActivity
 com.huawei.intelligent	android.view.ViewGroup
 com.ifeng.news2	androidx.recyclerview.widget.RecyclerView
 com.ifeng.news2	com.ifeng.news2.activity.IfengTabMainActivity
-com.jingdong.app.mall	android.support.v7.widget.RecyclerView
-com.jingdong.app.mall	android.widget.FrameLayout
+com.iflytek.inputmethod	android.inputmethodservice.SoftInputWindow
+com.iflytek.inputmethod	android.widget.FrameLayout
 com.kiwigames.life.simulator	android.widget.FrameLayout
-com.moji.mjweather	android.widget.ListView
+com.miui.securitycenter	android.view.View
 com.moji.mjweather	androidx.recyclerview.widget.RecyclerView
 com.moji.mjweather	com.moji.mjweather.MainActivity
 com.netease.cloudmusic	android.widget.FrameLayout
+com.netease.cloudmusic	com.netease.cloudmusic.activity.LoadingActivity
 com.oppo.launcher	android.widget.LinearLayout
 com.oppo.launcher	android.widget.ListView
 com.oppo.launcher	android.widget.ScrollView
 com.oppo.launcher	com.oppo.launcher.Launcher
-com.oppo.market	com.heytap.cdo.client.search.c
-com.qiyi.video	org.qiyi.android.video.MainActivity
+com.polaris.drawboard	com.polaris.drawboard.MySplashActivity
 com.ruiqu.fanaticBalls	com.bytedance.sdk.openadsdk.activity.TTRewardExpressVideoActivity
-com.sdu.didi.psnger	android.app.Dialog
-com.sina.weibo	android.widget.FrameLayout
-com.sina.weibo	com.weibo.mobileads.view.b
-com.sina.weibo	关闭关注浮窗
-com.sina.weibo	关闭广告共享计划
-com.sina.weibo	关闭评论区广告
+com.sdu.didi.psnger	android.widget.FrameLayout
 com.smzdm.client.android	android.widget.FrameLayout
-com.sohu.inputmethod.sogou.xiaomi	android.widget.FrameLayout
+com.snail.android.lucky	android.widget.FrameLayout
 com.sohu.inputmethod.sogouoem	android.widget.FrameLayout
 com.ss.android.article.lite	com.ss.android.article.lite.activity.SplashActivity
-com.ss.android.ugc.aweme	android.widget.FrameLayout
-com.ss.android.ugc.aweme	com.ss.android.ugc.aweme.splash.SplashAdActivity
-com.tencent.mm	android.widget.FrameLayout
-com.tencent.mm	com.tencent.mm.ui.transmit.SelectConversationUI
-com.tencent.mobileqq	aboh
-com.tencent.mobileqq	com.tencent.mobileqq.minigame.ui.GameActivity1
+com.ss.android.article.video	com.ss.android.article.video.activity.SplashActivity
+com.sup.android.superb	android.widget.FrameLayout
+com.tencent.mtt	com.tencent.mtt.MainActivity
+com.tencent.qqlive	com.tencent.qqlive.ona.activity.SplashHomeActivity
 com.vivo.floatingball	android.widget.FrameLayout
-com.vivo.globalanimation	android.view.View
 com.vivo.upslide	android.widget.FrameLayout
 com.vivo.upslide	com.vivo.upslide.recents.RecentsActivity
 com.wintheshow.quickreply	android.widget.ImageView
+com.xiaoshuodaquan.ebook.app	com.biquge.ebook.app.ui.activity.WelComeActivity
 com.ximalaya.ting.android	android.widget.FrameLayout
 com.ximalaya.ting.android	android.widget.ListView
+com.ximalaya.ting.android	com.ximalaya.ting.android.host.activity.WelComeActivity
 com.xueqiu.android	android.widget.FrameLayout
+com.xueqiu.android	com.xueqiu.android.common.splash.SplashActivity
 com.xunlei.downloadprovider	com.xunlei.downloadprovider.launch.LaunchActivity
-com.xunmeng.pinduoduo	android.widget.FrameLayout
-com.ygkj.chelaile.standard	dev.xesam.chelaile.app.module.func.HotSplashActivity
-com.yinpai	com.yinpai.activity.NewChatActivity
+com.zhihu.android	android.widget.FrameLayout
+com.zhihu.android	com.zhihu.android.app.ui.activity.LauncherActivity
+com.zidongdianji	android.widget.FrameLayout
+com.zui.launcher	android.app.Dialog
+ginlemon.flowerfree	ginlemon.flower.HomeScreen
 net.oneplus.launcher	android.widget.ListView
 net.oneplus.launcher	android.widget.RelativeLayout
 net.oneplus.launcher	net.oneplus.launcher.Launcher
