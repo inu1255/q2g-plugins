@@ -77,7 +77,6 @@ exports.setParams = function () {
  */
 exports.onWindowChange = async function (pkgname, clsname) {
 	// 禁止1秒内连续点击
-	if (clickAt + 3e3 > Date.now()) return;
 	if (!win) win = we.newFloatWindow("adskip");
 	if (!size) size = await we.screenSize();
 	let h = size.y - (size.f || 0);
@@ -87,10 +86,14 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
 	if (/^(com\.android|cn\.inu1255)|\.input/.test(pkgname)) return;
-	if (prevPkg == pkgname) return;
+	// if (prevPkg == pkgname) return;
 	prevPkg = pkgname;
 	let currentID = ++globalID; // 如果下个窗口事件已发生，中断当前操作
 	console.log("#" + currentID, "进入", pkgname, clsname);
+	if (clickAt + 3e3 > Date.now()) {
+		console.log(`3秒内点击过,忽略`);
+		return;
+	}
 	let ad_setting = exports.params.ad_setting;
 	let n = 5;
 	do {
@@ -106,7 +109,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 			if (x.right - x.left > 200 || x.bottom - x.top > 200) return false;
 			return true;
 		});
-		if (hasSkip) list.filter((x) => x.text);
+		if (hasSkip) list = list.filter((x) => /跳过|skip/i.test(x.text));
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
 			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
@@ -124,14 +127,21 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				let id = item.id;
 				let pkg = ad_setting[pkgname] || (ad_setting[pkgname] = {});
 				let cls = pkg[clsname] || (pkg[clsname] = {pkg: pkgname, cls: clsname, skip: 0, cnt: 0, last: 0});
-				if (cls.skip == 1) we.clickById(id).then((x) => x && onSkip(cls));
-				else if (cls.skip == 0) {
+				if (cls.skip == 1) {
+					we.clickById(id).then((x) => x && onSkip(cls));
+					await we.sleep(1e3);
+					if (currentID == globalID) {
+						we.clickById(id);
+						console.log("再次点击", currentID, globalID);
+					}
+				} else if (cls.skip == 0 && !open_at) {
 					open_at = Date.now();
 					setTimeout(function () {
 						if (open_at + 9e3 < Date.now()) win.close();
 					}, 10e3);
 					if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
 					let skip = html ? await win.open({data: html}) : null;
+					open_at = 0;
 					if (typeof skip === "number") {
 						if (skip) cls.skip = skip;
 						if (skip == 1) {
@@ -142,7 +152,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 					break;
 				}
 			}
-			n = -1255;
+			// n = -1255;
 			break;
 		} else {
 			console.log("#" + currentID, elCnt, hasSkip, "XXXXX", pkgname, clsname);
