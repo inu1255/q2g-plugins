@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.1.3
+// @version           1.1.5
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -46,8 +46,10 @@ var html; // 弹窗html
 var size;
 function onSkip(cls) {
 	if (cls) {
-		cls.cnt++;
-		cls.last = Date.now();
+		if (cls.skip == 1) {
+			cls.cnt++;
+			cls.last = Date.now();
+		}
 		bmob.create("ad_setting", cls);
 	}
 }
@@ -147,7 +149,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 						if (skip == 1) {
 							we.clickById(id).then((x) => x && onSkip(cls));
 							we.toast("添加成功");
-						} else if (skip) onSkip();
+						} else if (skip) onSkip(cls);
 					}
 					break;
 				}
