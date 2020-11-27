@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.1.5
+// @version           1.1.6
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -53,16 +53,20 @@ function onSkip(cls) {
 		bmob.create("ad_setting", cls);
 	}
 }
+function getAdSetting(page) {
+	return bmob.select("ad_setting", "limit " + page * 100 + "," + (page * 100 + 100)).then((list) => {
+		let ad_setting = exports.params.ad_setting;
+		for (let item of list) {
+			let pkgs = ad_setting[item.pkg] || (ad_setting[item.pkg] = {});
+			pkgs[item.cls] = item;
+		}
+		if (list.length == 100) return getAdSetting(page + 1);
+	});
+}
 exports.getParams = function () {
 	if (params_pms) return params_pms;
 	return (params_pms = Promise.all([
-		bmob.select("ad_setting").then((list) => {
-			let ad_setting = exports.params.ad_setting;
-			for (let item of list) {
-				let pkgs = ad_setting[item.pkg] || (ad_setting[item.pkg] = {});
-				pkgs[item.cls] = item;
-			}
-		}),
+		getAdSetting(0),
 		bmob.select("params", "k='ad_white_list'").then((list) => {
 			if (list.length) exports.params.white_list = list[0].v;
 		}),
