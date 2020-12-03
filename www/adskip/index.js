@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.1.6
+// @version           1.1.9
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -12,13 +12,20 @@
  * we.getApps
  */
 // 初始化配置信息
-
+const launchers = [
+	"com.oppo.launcher", // OPPO桌面
+	"com.vivo.launcher", // vivo桌面
+	"com.emui.launcher", // 华为桌面
+	"com.huawei.android.launcher", // 华为桌面
+	"com.miui.home", // 小米桌面
+	"com.oneplus.hydrogen.launcher", // 一加桌面
+	"com.meizu.flyme.launcher", // 魅族桌面
+];
+const onlyTextPkg = new Set(["com.tencent.qqmusic"]);
 exports.params = {
 	white_list: [
 		"android",
 		"com.android.settings",
-		"com.miui.home",
-		"com.huawei.android.launcher",
 		"com.tencent.mm", // 微信
 		"com.iflytek.inputmethod", // 迅飞
 		"com.sohu.inputmethod.sogou", // 搜狗输入
@@ -27,7 +34,7 @@ exports.params = {
 		"cn.inu1255.adskip",
 		"cn.inu1255.quan2go",
 		"com.android.systemui",
-	],
+	].concat(launchers),
 	ad_setting: merge({
 		"com.sina.weibo": {
 			关闭广告共享计划: {pkg: "com.sina.weibo", cls: "关闭广告共享计划", skip: 1, cnt: 0, last: 0},
@@ -40,6 +47,7 @@ var open_at = 0; // 浮窗最后弹出时间
 var globalID = 0; // 最近窗口切换ID
 var clickAt = 0; // 上次点击时间
 var prevPkg = ""; // 上个包
+var changePkgAt = 0; // 切换软件时间
 var win;
 var params_pms;
 var html; // 弹窗html
@@ -54,7 +62,7 @@ function onSkip(cls) {
 	}
 }
 function getAdSetting(page) {
-	return bmob.select("ad_setting", "limit " + page * 100 + "," + (page * 100 + 100)).then((list) => {
+	return bmob.select("ad_setting", "limit " + page * 100 + ",100").then((list) => {
 		let ad_setting = exports.params.ad_setting;
 		for (let item of list) {
 			let pkgs = ad_setting[item.pkg] || (ad_setting[item.pkg] = {});
@@ -82,6 +90,14 @@ exports.setParams = function () {
  * @param {string} clsname
  */
 exports.onWindowChange = async function (pkgname, clsname) {
+	// if (prevPkg == pkgname) return;
+	if ((!prevPkg || ~launchers.indexOf(prevPkg)) && prevPkg != pkgname) {
+		changePkgAt = Date.now();
+		console.log(prevPkg, "-->", pkgname);
+	}
+	let exit = launchers.indexOf(prevPkg) < 0 && changePkgAt + 10e3 < Date.now();
+	prevPkg = pkgname;
+	if (exit) return;
 	// 禁止1秒内连续点击
 	if (!win) win = we.newFloatWindow("adskip");
 	if (!size) size = await we.screenSize();
@@ -92,8 +108,6 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
 	if (/^(com\.android|cn\.inu1255)|\.input/.test(pkgname)) return;
-	// if (prevPkg == pkgname) return;
-	prevPkg = pkgname;
 	let currentID = ++globalID; // 如果下个窗口事件已发生，中断当前操作
 	console.log("#" + currentID, "进入", pkgname, clsname);
 	if (clickAt + 3e3 > Date.now()) {
@@ -112,10 +126,10 @@ exports.onWindowChange = async function (pkgname, clsname) {
 			if (x.left < w32 || x.bottom > w31 || x.top < hb) return false;
 			if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
 			if (/跳过|skip/i.test(x.text)) return (hasSkip = true);
-			if (x.right - x.left > 200 || x.bottom - x.top > 200) return false;
+			if (x.text || x.right - x.left > 200 || x.bottom - x.top > 200) return false;
 			return true;
 		});
-		if (hasSkip) list = list.filter((x) => /跳过|skip/i.test(x.text));
+		if (hasSkip || onlyTextPkg.has(pkgname)) list = list.filter((x) => /跳过|skip/i.test(x.text));
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
 			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
@@ -136,10 +150,10 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				if (cls.skip == 1) {
 					we.clickById(id).then((x) => x && onSkip(cls));
 					await we.sleep(1e3);
-					if (currentID == globalID) {
-						we.clickById(id);
-						console.log("再次点击", currentID, globalID);
-					}
+					// if (currentID == globalID) {
+					// 	we.clickById(id);
+					// 	console.log("再次点击", currentID, globalID);
+					// }
 				} else if (cls.skip == 0 && !open_at) {
 					open_at = Date.now();
 					setTimeout(function () {
