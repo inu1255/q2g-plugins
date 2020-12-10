@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.1.10
+// @version           1.2.0
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -21,7 +21,7 @@ const launchers = [
 	"com.oneplus.hydrogen.launcher", // 一加桌面
 	"com.meizu.flyme.launcher", // 魅族桌面
 ];
-const onlyTextPkg = new Set(["com.tencent.qqmusic"]);
+const onlyTextPkg = new Set(["com.tencent.qqmusic", "com.qq.reader"]);
 exports.params = {
 	white_list: [
 		"android",
@@ -42,6 +42,7 @@ exports.params = {
 			关闭关注浮窗: {pkg: "com.sina.weibo", cls: "关闭关注浮窗", skip: 2, cnt: 0, last: 0},
 		},
 	}),
+	ad: {},
 };
 var open_at = 0; // 浮窗最后弹出时间
 var globalID = 0; // 最近窗口切换ID
@@ -74,8 +75,11 @@ exports.getParams = function () {
 	if (params_pms) return params_pms;
 	return (params_pms = Promise.all([
 		getAdSetting(0),
-		we.get("setting/get", {k:'ad_white_list'}).then((data) => {
+		we.get("setting/get", {k: "ad_white_list"}).then((data) => {
 			if (data) exports.params.white_list = data;
+		}),
+		we.dbget("ad").then((data) => {
+			if (data) exports.params.ad = data;
 		}),
 	]).then(() => exports.params));
 };
@@ -124,11 +128,12 @@ exports.onWindowChange = async function (pkgname, clsname) {
 			if (x.left && x.top) elCnt++;
 			if (x.left < w32 || x.bottom > w31 || x.top < hb) return false;
 			if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
-			if (/跳过|skip/i.test(x.text)) return (hasSkip = true);
+			if (/跳过|skip/i.test(x.text) || /skip/.test(x.view)) return (hasSkip = true);
 			if (x.text || x.right - x.left > 200 || x.bottom - x.top > 200) return false;
 			return true;
 		});
-		if (hasSkip || onlyTextPkg.has(pkgname)) list = list.filter((x) => /跳过|skip/i.test(x.text));
+		if (onlyTextPkg.has(pkgname)) list = list.filter((x) => x.text);
+		if (hasSkip) list = list.filter((x) => /跳过|skip/i.test(x.text) || /skip/.test(x.view));
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
 			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
@@ -189,19 +194,62 @@ exports.onWindowChange = async function (pkgname, clsname) {
  * @param {string} pkg
  * @param {string} cls
  */
-exports.onContentChange = async function (pkg, cls) {
+exports.onContentChange = async function (pkg, cls, node) {
 	if (!win) win = we.newFloatWindow("adskip");
-	if (pkg != "com.sina.weibo" || cls != "com.sina.weibo.feed.DetailWeiboActivity") return;
-	let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
-	if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
-	if (sina_weibo["关闭评论区广告"].skip == 1)
-		await we
-			.clickByView("com.sina.weibo:id/ll_close")
-			.then(function (ok) {
-				if (ok) return we.clickByText("不感兴趣");
-			})
-			.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
-	if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
+	if (cls == "com.sina.weibo.feed.DetailWeiboActivity") {
+		let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
+		if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
+		if (sina_weibo["关闭评论区广告"].skip == 1)
+			await we
+				.clickByView("com.sina.weibo:id/ll_close")
+				.then(function (ok) {
+					if (ok) return we.clickByText("不感兴趣");
+				})
+				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
+		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
+	}
+	let data = exports.params.ad[pkg];
+	if (!data) return;
+	for (let k in data) {
+		let steps = data[k];
+		let isFirst = true; // [第一步, 第一步成功]
+		let ok = false;
+		for (let step of steps) {
+			let retry = 5;
+			ok = false;
+			while (retry-- > 0) {
+				if (step.path) {
+					ok = await we.clickByPath(step.path);
+				} else {
+					let nodes = await we.getNodes();
+					for (let node of nodes) {
+						if (step.view && node.view != step.view) continue;
+						if (step.text) {
+							try {
+								if (!new RegExp(step.text).test(node.text)) continue;
+							} catch (error) {
+								continue;
+							}
+						}
+						ok = true;
+						await we.clickById(node.id);
+					}
+				}
+				if (ok) {
+					isFirst = false;
+					break;
+				} else if (isFirst) {
+					break;
+				}
+				await we.sleep(500);
+			}
+			if (!ok) break;
+		}
+		if (!isFirst) {
+			console.log(k, ok ? "执行成功" : "执行失败");
+			return true;
+		}
+	}
 };
 function merge(ad_setting) {
 	let s = ``;
