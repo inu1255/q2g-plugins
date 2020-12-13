@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.0
+// @version           1.2.4
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -51,7 +51,6 @@ var clickAt = 0; // 上次点击时间
 var prevPkg = ""; // 上个包
 var changePkgAt = 0; // 切换软件时间
 var win;
-var params_pms;
 var html; // 弹窗html
 function onSkip(cls) {
 	if (cls) {
@@ -59,7 +58,7 @@ function onSkip(cls) {
 			cls.cnt++;
 			cls.last = Date.now();
 		}
-		we.post("ad_setting/set", cls);
+		we.post("ad_setting/set", cls, {ignore: true});
 	}
 }
 function getAdSetting(page) {
@@ -72,19 +71,17 @@ function getAdSetting(page) {
 	});
 }
 exports.getParams = function () {
-	if (params_pms) return params_pms;
-	return (params_pms = Promise.all([
+	return Promise.all([
 		getAdSetting(0),
-		we.get("setting/get", {k: "ad_white_list"}).then((data) => {
+		we.get("setting/get", {k: "ad_white_list"}, {ignore: true}).then((data) => {
 			if (data) exports.params.white_list = data;
 		}),
-		we.dbget("ad").then((data) => {
+		we.dbget("ad", null).then((data) => {
 			if (data) exports.params.ad = data;
 		}),
-	]).then(() => exports.params));
+	]).then(() => exports.params);
 };
 exports.setParams = function () {
-	params_pms = null;
 	return exports.getParams();
 };
 function isLauncher(pkg) {
@@ -120,7 +117,6 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let skipCls = false;
 	let ad_setting = exports.params.ad_setting;
 	skipCls = ad_setting[pkgname] && ad_setting[pkgname][clsname];
-	let mss = [200, 500, 800];
 	for (let i = 0; i < 8; i++) {
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
@@ -183,7 +179,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				console.log("#" + currentID, "XXXXX", pkgname, clsname);
 			}
 		}
-		await we.sleep(mss[i] || 1e3);
+		await we.sleep(900);
 		if (currentID != globalID) {
 			console.log("#" + currentID, "中断", pkgname, clsname);
 			break;
