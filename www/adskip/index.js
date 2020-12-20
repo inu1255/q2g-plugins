@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.4
+// @version           1.2.6
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -22,7 +22,7 @@ const launchers = [
 	"com.oneplus.hydrogen.launcher", // 一加桌面
 	"com.meizu.flyme.launcher", // 魅族桌面
 ];
-const onlyTextPkg = new Set(["com.tencent.qqmusic", "com.qq.reader"]);
+const onlyTextPkg = new Set(["com.tencent.qqmusic", "com.qq.reader", "cn.wps.moffice_eng"]);
 exports.params = {
 	white_list: [
 		"android",
@@ -109,7 +109,6 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	if (/^(cn\.inu1255)|\.input/.test(pkgname)) return;
 	let currentID = ++globalID; // 如果下个窗口事件已发生，中断当前操作
 	console.log("#" + currentID, "进入", pkgname, clsname);
-	var startAt = Date.now();
 	if (clickAt + 3e3 > Date.now()) {
 		console.log(`3秒内点击过,忽略`);
 		return;
@@ -117,17 +116,18 @@ exports.onWindowChange = async function (pkgname, clsname) {
 	let skipCls = false;
 	let ad_setting = exports.params.ad_setting;
 	skipCls = ad_setting[pkgname] && ad_setting[pkgname][clsname];
-	for (let i = 0; i < 8; i++) {
+	var startAt = Date.now();
+	for (let i = 0; i < 9; i++) {
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
 			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
 			break;
 		}
 		if (currentID != globalID) {
-			console.log("#" + currentID, "中断", pkgname, clsname);
+			console.log("#" + currentID, "中断1", Date.now() - startAt, pkgname, clsname);
 			break;
 		}
-		var b = Date.now();
+		let b = Date.now();
 		if (skipCls && skipCls.skip == 1 && we.clickByPath) {
 			if (await we.clickByPath(onlyTextPkg.has(pkgname) ? "t跳过|skip" : "x跳过|skip", pkgname)) {
 				onSkip(skipCls);
@@ -137,7 +137,11 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		}
 		{
 			if (await run(pkgname).catch((x) => 0)) break;
-			var b = Date.now();
+			if (currentID != globalID) {
+				console.log("#" + currentID, "中断2", Date.now() - startAt, pkgname, clsname);
+				break;
+			}
+			let b = Date.now();
 			let list = await we.getNodes(3 | 8);
 			list = list.filter((x) => {
 				if (x.pkg != pkgname) return false;
@@ -145,6 +149,11 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				return /跳过|skip/i.test(x.text) || (!onlyTextPkg.has(pkgname) && /skip/.test(x.view));
 			});
 			console.log("用时:", i, Date.now() - startAt, Date.now() - b, "秒", list);
+			// 禁止1秒内连续点击
+			if (clickAt + 3e3 > Date.now()) {
+				console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
+				break;
+			}
 			// 有跳过按钮 或者 元素比较少
 			if (list.length) {
 				console.log("跳过", i, "OOOOO", pkgname, clsname, list);
@@ -179,11 +188,12 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				console.log("#" + currentID, "XXXXX", pkgname, clsname);
 			}
 		}
-		await we.sleep(900);
 		if (currentID != globalID) {
-			console.log("#" + currentID, "中断", pkgname, clsname);
+			console.log("#" + currentID, "中断3", Date.now() - startAt, pkgname, clsname);
 			break;
 		}
+		let dt = startAt + 900 * (i + 1) - Date.now();
+		if (dt > 0) await we.sleep(dt);
 	}
 };
 
@@ -209,6 +219,7 @@ exports.onContentChange = async function (pkg, cls, node) {
 	return await run(pkg);
 };
 async function run(pkg) {
+	if (!we.click) return;
 	let data = exports.params.ad[pkg];
 	if (!data) return;
 	for (let k in data) {
@@ -219,17 +230,7 @@ async function run(pkg) {
 			let retry = 5;
 			ok = false;
 			while (retry-- > 0) {
-				if (step.path) {
-					ok = await we.clickByPath(step.path, pkg);
-				} else {
-					let nodes = await we.getNodes();
-					for (let node of nodes) {
-						if (step.view && node.view != step.view) continue;
-						if (step.text && node.text != step.text) continue;
-						ok = true;
-						await we.clickById(node.id);
-					}
-				}
+				ok = await we.click(step, pkg);
 				if (ok) {
 					isFirst = false;
 					break;
