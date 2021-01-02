@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.6
+// @version           1.2.7
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -160,27 +160,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				clickAt = Date.now();
 				for (let item of list) {
 					let id = item.id;
-					let pkg = ad_setting[pkgname] || (ad_setting[pkgname] = {});
-					let cls = pkg[clsname] || (pkg[clsname] = {pkg: pkgname, cls: clsname, skip: 0, cnt: 0, last: 0});
-					if (cls.skip == 1) {
-						we.clickById(id).then((x) => x && onSkip(cls));
-					} else if (cls.skip == 0 && !open_at) {
-						open_at = Date.now();
-						setTimeout(function () {
-							if (open_at + 9e3 < Date.now()) win.close();
-						}, 10e3);
-						if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
-						let skip = html ? await win.open({data: html}) : null;
-						open_at = 0;
-						if (typeof skip === "number") {
-							if (skip) cls.skip = skip;
-							if (skip == 1) {
-								we.clickById(id).then((x) => x && onSkip(cls));
-								we.toast("添加成功");
-							} else if (skip) onSkip(cls);
-						}
-						break;
-					}
+					if (await checkAndClick(pkgname, clsname, item, () => we.clickById(id))) break;
 				}
 				// n = -1255;
 				break;
@@ -196,6 +176,46 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		if (dt > 0) await we.sleep(dt);
 	}
 };
+
+async function checkAndClick(pkgname, clsname, node, clickFunction) {
+	let ad_setting = exports.params.ad_setting;
+	let pkg = ad_setting[pkgname] || (ad_setting[pkgname] = {});
+	let cls = pkg[clsname] || (pkg[clsname] = {pkg: pkgname, cls: clsname, skip: 0, cnt: 0, last: 0});
+	if (cls.skip == 1) {
+		clickFunction().then((x) => x && onSkip(cls));
+	} else if (cls.skip == 0 && !open_at) {
+		open_at = Date.now();
+		setTimeout(function () {
+			if (open_at + 9e3 < Date.now()) win.close();
+		}, 10e3);
+		if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
+		let skip = html ? await win.open({data: html}) : null;
+		open_at = 0;
+		if (typeof skip === "number") {
+			if (skip) cls.skip = skip;
+			if (skip == 1) {
+				clickFunction().then((x) => x && onSkip(cls));
+				we.toast("添加成功");
+			} else if (skip) onSkip(cls);
+		}
+		return true;
+	}
+}
+
+async function oncontent(pkgname, clsname, node) {
+	if (!node) return;
+	let white_list = exports.params.white_list;
+	if (white_list.indexOf(pkgname) >= 0) return;
+	if (/^(cn\.inu1255)|\.input/.test(pkgname)) return;
+	if (clickAt + 3e3 > Date.now()) {
+		console.log(`3秒内点击过,忽略`);
+		return;
+	}
+	if (/跳过|skip/i.test(node.text) || (!onlyTextPkg.has(pkgname) && /skip/.test(node.view))) {
+		clickAt = Date.now();
+		await checkAndClick(pkgname, clsname, node, () => we.clickXY((node.left + node.right) / 2, (node.top + node.bottom) / 2));
+	}
+}
 
 /**
  * 窗口内容变化时触发
@@ -216,6 +236,7 @@ exports.onContentChange = async function (pkg, cls, node) {
 				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
 		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 	}
+	await oncontent(pkg, cls, node);
 	return await run(pkg);
 };
 async function run(pkg) {
