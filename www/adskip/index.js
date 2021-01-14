@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.7
+// @version           1.2.8
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -188,8 +188,12 @@ async function checkAndClick(pkgname, clsname, node, clickFunction) {
 		setTimeout(function () {
 			if (open_at + 9e3 < Date.now()) win.close();
 		}, 10e3);
+		let skip;
 		if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
-		let skip = html ? await win.open({data: html}) : null;
+		if (html) {
+			var size = await we.screenSize();
+			skip = await win.open({data: html, x: 100, y: size.y - 500 - size.f, width: size.x - 200, height: 315, forceLayout: true});
+		}
 		open_at = 0;
 		if (typeof skip === "number") {
 			if (skip) cls.skip = skip;
