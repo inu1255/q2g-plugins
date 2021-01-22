@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.8
+// @version           1.2.10
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -129,7 +129,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		}
 		let b = Date.now();
 		if (skipCls && skipCls.skip == 1 && we.clickByPath) {
-			if (await we.clickByPath(onlyTextPkg.has(pkgname) ? "t跳过|skip" : "x跳过|skip", pkgname)) {
+			if (await we.clickByPath(onlyTextPkg.has(pkgname) ? "t[\\d\\s]*(跳过|skip)[\\d\\s]*" : "x[\\d\\s]*(跳过|skip)[\\d\\s]*", pkgname)) {
 				onSkip(skipCls);
 				console.log("直接跳过:", i, Date.now() - startAt, Date.now() - b, "秒", skipCls);
 				break;
@@ -146,6 +146,7 @@ exports.onWindowChange = async function (pkgname, clsname) {
 			list = list.filter((x) => {
 				if (x.pkg != pkgname) return false;
 				if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
+				if (~["自动跳过", "广告跳过"].indexOf(x.text)) return false;
 				return /跳过|skip/i.test(x.text) || (!onlyTextPkg.has(pkgname) && /skip/.test(x.view));
 			});
 			console.log("用时:", i, Date.now() - startAt, Date.now() - b, "秒", list);
