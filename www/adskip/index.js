@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.10
+// @version           1.2.12
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -236,7 +236,7 @@ exports.onContentChange = async function (pkg, cls, node) {
 			await we
 				.clickByView("com.sina.weibo:id/ll_close")
 				.then(function (ok) {
-					if (ok) return we.clickByText("不感兴趣");
+					if (ok) return we.sleep(500).then(() => we.clickByPath("T不感兴趣"));
 				})
 				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
 		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
