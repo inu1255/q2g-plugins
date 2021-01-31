@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.12
+// @version           1.2.14
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -12,7 +12,8 @@
  * we.getApps
  */
 // 初始化配置信息
-let launcher = "";
+var launcher = "";
+var size = {x: 1080, y: 1920}; // 屏幕大小
 const launchers = [
 	"com.oppo.launcher", // OPPO桌面
 	"com.vivo.launcher", // vivo桌面
@@ -95,6 +96,7 @@ function isLauncher(pkg) {
 exports.onWindowChange = async function (pkgname, clsname) {
 	if (!win) win = we.newFloatWindow("adskip");
 	if (!launcher && we.getLauncherName) launcher = await we.getLauncherName();
+	if (!size) size = await we.screenSize();
 	// 上次
 	if ((!prevPkg || isLauncher(prevPkg)) && prevPkg != pkgname) {
 		changePkgAt = Date.now();
@@ -142,12 +144,19 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				break;
 			}
 			let b = Date.now();
-			let list = await we.getNodes(3 | 8);
+			let list = await we.getNodes(3);
 			list = list.filter((x) => {
 				if (x.pkg != pkgname) return false;
 				if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
 				if (~["自动跳过", "广告跳过"].indexOf(x.text)) return false;
-				return /跳过|skip/i.test(x.text) || (!onlyTextPkg.has(pkgname) && /skip/.test(x.view));
+				if (/跳过|skip/i.test(x.text)) return true;
+				if (onlyTextPkg.has(pkgname)) return false;
+				if (/skip/.test(x.view)) return true;
+				if (/close|cancel/.test(x.view)) {
+					var px = (x.left + x.right) / 2;
+					if (px > size.x * 0.4 && px < size.x * 0.6 && x.top > size.y / 2) return true;
+				}
+				return false;
 			});
 			console.log("用时:", i, Date.now() - startAt, Date.now() - b, "秒", list);
 			// 禁止1秒内连续点击
@@ -192,6 +201,7 @@ async function checkAndClick(pkgname, clsname, node, clickFunction) {
 		let skip;
 		if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
 		if (html) {
+			if (we.showPoint) we.showPoint((node.left + node.right) / 2, (node.top + node.bottom) / 2);
 			var size = await we.screenSize();
 			skip = await win.open({data: html, x: 100, y: size.y - 500 - size.f, width: size.x - 200, height: 315, forceLayout: true});
 		}
