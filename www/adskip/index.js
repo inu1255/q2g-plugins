@@ -40,8 +40,6 @@ exports.params = {
 	ad_setting: merge({
 		"com.sina.weibo": {
 			关闭广告共享计划: {pkg: "com.sina.weibo", cls: "关闭广告共享计划", skip: 1, cnt: 0, last: 0},
-			关闭评论区广告: {pkg: "com.sina.weibo", cls: "关闭评论区广告", skip: 1, cnt: 0, last: 0},
-			关闭关注浮窗: {pkg: "com.sina.weibo", cls: "关闭关注浮窗", skip: 2, cnt: 0, last: 0},
 		},
 	}),
 	ad: {},
@@ -244,14 +242,6 @@ exports.onContentChange = async function (pkg, cls, node) {
 	if (cls == "com.sina.weibo.feed.DetailWeiboActivity") {
 		let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
 		if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
-		if (sina_weibo["关闭评论区广告"].skip == 1)
-			await we
-				.clickByView("com.sina.weibo:id/ll_close")
-				.then(function (ok) {
-					if (ok) return we.sleep(500).then(() => we.clickByPath("T不感兴趣"));
-				})
-				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
-		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout").then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 	}
 	await oncontent(pkg, cls, node);
 	return await run(pkg);
