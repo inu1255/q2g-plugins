@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.14
+// @version           1.2.15
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -13,7 +13,7 @@
  */
 // 初始化配置信息
 var launcher = "";
-var size = {x: 1080, y: 1920}; // 屏幕大小
+var size; // 屏幕大小
 const launchers = [
 	"com.oppo.launcher", // OPPO桌面
 	"com.vivo.launcher", // vivo桌面
@@ -201,9 +201,11 @@ async function checkAndClick(pkgname, clsname, node, clickFunction) {
 		let skip;
 		if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
 		if (html) {
-			if (we.showPoint) we.showPoint((node.left + node.right) / 2, (node.top + node.bottom) / 2);
-			var size = await we.screenSize();
+			var close;
+			if (we.showPoint) close = we.showPoint((node.left + node.right) / 2, (node.top + node.bottom) / 2, true);
+			size = size || (await we.screenSize());
 			skip = await win.open({data: html, x: 100, y: size.y - 500 - size.f, width: size.x - 200, height: 315, forceLayout: true});
+			close && close();
 		}
 		open_at = 0;
 		if (typeof skip === "number") {
