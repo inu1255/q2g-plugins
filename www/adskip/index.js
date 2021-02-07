@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.15
+// @version           1.2.17
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -37,11 +37,16 @@ exports.params = {
 		"cn.inu1255.quan2go",
 		"com.android.systemui",
 	],
-	ad_setting: merge({
+	ad_setting: {
 		"com.sina.weibo": {
 			关闭广告共享计划: {pkg: "com.sina.weibo", cls: "关闭广告共享计划", skip: 1, cnt: 0, last: 0},
+			关闭评论区广告: {pkg: "com.sina.weibo", cls: "关闭评论区广告", skip: 1, cnt: 0, last: 0},
+			关闭关注浮窗: {pkg: "com.sina.weibo", cls: "关闭关注浮窗", skip: 2, cnt: 0, last: 0},
 		},
-	}),
+		"com.kugou.android": {
+			"com.kugou.android.app.splash.SplashActivity": {pkg: "com.kugou.android", cls: "com.kugou.android.app.splash.SplashActivity", skip: 1, cnt: 0, last: 0},
+		},
+	},
 	ad: {},
 };
 var open_at = 0; // 浮窗最后弹出时间
@@ -142,20 +147,28 @@ exports.onWindowChange = async function (pkgname, clsname) {
 				break;
 			}
 			let b = Date.now();
-			let list = await we.getNodes(3);
-			list = list.filter((x) => {
-				if (x.pkg != pkgname) return false;
-				if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
-				if (~["自动跳过", "广告跳过"].indexOf(x.text)) return false;
-				if (/跳过|skip/i.test(x.text)) return true;
-				if (onlyTextPkg.has(pkgname)) return false;
-				if (/skip/.test(x.view)) return true;
-				if (/close|cancel/.test(x.view)) {
-					var px = (x.left + x.right) / 2;
-					if (px > size.x * 0.4 && px < size.x * 0.6 && x.top > size.y / 2) return true;
-				}
-				return false;
-			});
+			let list;
+			if (clsname == "com.kugou.android.app.splash.SplashActivity") {
+				let nodes = await we.getNodes(0);
+				console.log("酷狗开屏广告", nodes.length);
+				if (nodes.length == 1) list = nodes;
+			}
+			if (!list) {
+				let nodes = await we.getNodes(3);
+				list = nodes.filter((x) => {
+					if (x.pkg != pkgname) return false;
+					if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
+					if (~["自动跳过", "广告跳过"].indexOf(x.text)) return false;
+					if (/跳过|skip/i.test(x.text)) return true;
+					if (onlyTextPkg.has(pkgname)) return false;
+					if (/skip/.test(x.view)) return true;
+					if (/close|cancel/.test(x.view)) {
+						var px = (x.left + x.right) / 2;
+						if (px > size.x * 0.4 && px < size.x * 0.6 && x.top > size.y / 2) return true;
+					}
+					return false;
+				});
+			}
 			console.log("用时:", i, Date.now() - startAt, Date.now() - b, "秒", list);
 			// 禁止1秒内连续点击
 			if (clickAt + 3e3 > Date.now()) {
@@ -241,7 +254,15 @@ exports.onContentChange = async function (pkg, cls, node) {
 	if (!win) win = we.newFloatWindow("adskip");
 	if (cls == "com.sina.weibo.feed.DetailWeiboActivity") {
 		let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
-		if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x").then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
+		if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x", 2).then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
+		if (sina_weibo["关闭评论区广告"].skip == 1)
+			await we
+				.clickByView("com.sina.weibo:id/ll_close", 2)
+				.then(function (ok) {
+					if (ok) return we.sleep(500).then(() => we.clickByPath("T不感兴趣", "com.sina.weibo", 2));
+				})
+				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
+		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout", 2).then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 	}
 	await oncontent(pkg, cls, node);
 	return await run(pkg);
@@ -276,15 +297,4 @@ async function run(pkg) {
 			console.log(k, "不成功");
 		}
 	}
-}
-function merge(ad_setting) {
-	let s = ``;
-	for (let line of s.split("\n")) {
-		line = line.trim();
-		if (!line) continue;
-		let [pkg, cls] = line.split(/\s+/);
-		let c = ad_setting[pkg] || (ad_setting[pkg] = {});
-		if (!c[cls]) c[cls] = {pkg, cls, skip: 1, cnt: 0, last: 0};
-	}
-	return ad_setting;
 }
