@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.3.0
+// @version           1.3.1
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -120,10 +120,16 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		console.log(`3秒内点击过,忽略`);
 		return;
 	}
+	if (clsname == "com.weibo.mobileads.view.b") {
+		await we.open("com.sina.weibo", "com.sina.weibo.MainTabActivity", {flags: 0x10000000});
+		return;
+	}
 	switch_expire_at = Date.now() + switch_duration;
+	if (await run(pkgname).catch((x) => 0)) return;
 	// 1.7.7版本后contentchange事件有效，使用contentchange事件来跳过广告
 	if (+we.ver.buildVersion > 10706) return;
 	while (currentID == globalID) {
+		if (await run(pkgname).catch((x) => 0)) return;
 		if (!(await trySkip(pkgname, clsname, currentID))) break;
 		await we.sleep(300);
 	}
