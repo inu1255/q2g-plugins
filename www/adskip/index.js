@@ -1,7 +1,7 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.2.17
+// @version           1.3.0
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -54,6 +54,8 @@ var globalID = 0; // 最近窗口切换ID
 var clickAt = 0; // 上次点击时间
 var prevPkg = ""; // 上个包
 var changePkgAt = 0; // 切换软件时间
+var switch_expire_at = 0; // 开屏广告跳过结止时间
+var switch_duration = 9e3;
 var win;
 var html; // 弹窗html
 function onSkip(cls) {
@@ -118,85 +120,86 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		console.log(`3秒内点击过,忽略`);
 		return;
 	}
+	switch_expire_at = Date.now() + switch_duration;
+	// 1.7.7版本后contentchange事件有效，使用contentchange事件来跳过广告
+	if (+we.ver.buildVersion > 10706) return;
+	while (currentID == globalID) {
+		if (!(await trySkip(pkgname, clsname, currentID))) break;
+		await we.sleep(300);
+	}
+};
+
+async function trySkip(pkgname, clsname, currentID) {
+	if (switch_expire_at < Date.now()) return;
 	let skipCls = false;
 	let ad_setting = exports.params.ad_setting;
 	skipCls = ad_setting[pkgname] && ad_setting[pkgname][clsname];
-	var startAt = Date.now();
-	for (let i = 0; i < 9; i++) {
+	// 禁止1秒内连续点击
+	if (clickAt + 3e3 > Date.now()) {
+		console.log("禁止连续点击", pkgname, clsname);
+		return;
+	}
+	let b = Date.now();
+	if (skipCls && skipCls.skip == 1 && we.clickByPath) {
+		if (await we.clickByPath(onlyTextPkg.has(pkgname) ? "t[\\d\\s]*(跳过|skip)[\\d\\s]*" : "x[\\d\\s]*(跳过|skip)[\\d\\s]*", pkgname)) {
+			onSkip(skipCls);
+			clickAt = Date.now();
+			switch_expire_at = 0;
+			console.log("#" + currentID, "直接跳过:", Date.now() - switch_expire_at + switch_duration, Date.now() - b, "秒", skipCls);
+			return;
+		}
+	}
+	{
+		if (currentID != globalID) {
+			console.log("#" + currentID, "中断2", Date.now() - switch_expire_at + switch_duration, pkgname, clsname);
+			return;
+		}
+		let b = Date.now();
+		let list;
+		if (clsname == "com.kugou.android.app.splash.SplashActivity") {
+			let nodes = await we.getNodes(0);
+			console.log("酷狗开屏广告", nodes.length);
+			if (nodes.length == 1) list = nodes;
+		}
+		if (!list) {
+			let nodes = await we.getNodes(3);
+			list = nodes.filter((x) => {
+				if (x.pkg != pkgname) return false;
+				if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
+				if (~["自动跳过", "广告跳过"].indexOf(x.text)) return false;
+				if (/跳过|skip/i.test(x.text)) return true;
+				if (onlyTextPkg.has(pkgname)) return false;
+				if (/skip/.test(x.view)) return true;
+				if (/close|cancel/.test(x.view)) {
+					var px = (x.left + x.right) / 2;
+					if (px > size.x * 0.4 && px < size.x * 0.6 && x.top > size.y / 2) return true;
+				}
+				return false;
+			});
+		}
+		console.log("用时:", Date.now() - switch_expire_at + switch_duration, Date.now() - b, "秒", list);
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
 			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
-			break;
+			return;
 		}
-		if (currentID != globalID) {
-			console.log("#" + currentID, "中断1", Date.now() - startAt, pkgname, clsname);
-			break;
+		// 有跳过按钮 或者 元素比较少
+		if (list.length) {
+			console.log("跳过", "OOOOO", pkgname, clsname, list);
+			clickAt = Date.now();
+			switch_expire_at = 0;
+			for (let item of list) {
+				let id = item.id;
+				if (await checkAndClick(pkgname, clsname, item, () => we.clickById(id))) return;
+			}
+			// n = -1255;
+			return;
+		} else {
+			console.log("#" + currentID, "XXXXX", pkgname, clsname);
 		}
-		let b = Date.now();
-		if (skipCls && skipCls.skip == 1 && we.clickByPath) {
-			if (await we.clickByPath(onlyTextPkg.has(pkgname) ? "t[\\d\\s]*(跳过|skip)[\\d\\s]*" : "x[\\d\\s]*(跳过|skip)[\\d\\s]*", pkgname)) {
-				onSkip(skipCls);
-				console.log("直接跳过:", i, Date.now() - startAt, Date.now() - b, "秒", skipCls);
-				break;
-			}
-		}
-		{
-			if (await run(pkgname).catch((x) => 0)) break;
-			if (currentID != globalID) {
-				console.log("#" + currentID, "中断2", Date.now() - startAt, pkgname, clsname);
-				break;
-			}
-			let b = Date.now();
-			let list;
-			if (clsname == "com.kugou.android.app.splash.SplashActivity") {
-				let nodes = await we.getNodes(0);
-				console.log("酷狗开屏广告", nodes.length);
-				if (nodes.length == 1) list = nodes;
-			}
-			if (!list) {
-				let nodes = await we.getNodes(3);
-				list = nodes.filter((x) => {
-					if (x.pkg != pkgname) return false;
-					if (/android\.launcher$/.test(x.pkg) && x.text.length >= 8) return false;
-					if (~["自动跳过", "广告跳过"].indexOf(x.text)) return false;
-					if (/跳过|skip/i.test(x.text)) return true;
-					if (onlyTextPkg.has(pkgname)) return false;
-					if (/skip/.test(x.view)) return true;
-					if (/close|cancel/.test(x.view)) {
-						var px = (x.left + x.right) / 2;
-						if (px > size.x * 0.4 && px < size.x * 0.6 && x.top > size.y / 2) return true;
-					}
-					return false;
-				});
-			}
-			console.log("用时:", i, Date.now() - startAt, Date.now() - b, "秒", list);
-			// 禁止1秒内连续点击
-			if (clickAt + 3e3 > Date.now()) {
-				console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
-				break;
-			}
-			// 有跳过按钮 或者 元素比较少
-			if (list.length) {
-				console.log("跳过", i, "OOOOO", pkgname, clsname, list);
-				clickAt = Date.now();
-				for (let item of list) {
-					let id = item.id;
-					if (await checkAndClick(pkgname, clsname, item, () => we.clickById(id))) break;
-				}
-				// n = -1255;
-				break;
-			} else {
-				console.log("#" + currentID, "XXXXX", pkgname, clsname);
-			}
-		}
-		if (currentID != globalID) {
-			console.log("#" + currentID, "中断3", Date.now() - startAt, pkgname, clsname);
-			break;
-		}
-		let dt = startAt + 900 * (i + 1) - Date.now();
-		if (dt > 0) await we.sleep(dt);
 	}
-};
+	return true;
+}
 
 async function checkAndClick(pkgname, clsname, node, clickFunction) {
 	let ad_setting = exports.params.ad_setting;
@@ -232,16 +235,15 @@ async function checkAndClick(pkgname, clsname, node, clickFunction) {
 
 async function oncontent(pkgname, clsname, node) {
 	if (!node) return;
+	if (clickAt + 3e3 > Date.now()) return;
 	let white_list = exports.params.white_list;
 	if (white_list.indexOf(pkgname) >= 0) return;
 	if (/^(cn\.inu1255)|\.input/.test(pkgname)) return;
-	if (clickAt + 3e3 > Date.now()) {
-		console.log(`3秒内点击过,忽略`);
-		return;
-	}
 	if (/跳过|skip/i.test(node.text) || (!onlyTextPkg.has(pkgname) && /skip/.test(node.view))) {
 		clickAt = Date.now();
 		await checkAndClick(pkgname, clsname, node, () => we.clickXY((node.left + node.right) / 2, (node.top + node.bottom) / 2));
+	} else {
+		await trySkip(pkgname, clsname, globalID);
 	}
 }
 
@@ -264,8 +266,8 @@ exports.onContentChange = async function (pkg, cls, node) {
 				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
 		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout", 2).then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 	}
+	if (await run(pkg).catch((x) => 0)) return;
 	await oncontent(pkg, cls, node);
-	return await run(pkg);
 };
 async function run(pkg) {
 	if (!we.click) return;
