@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dev-server.js",
+    "publish": "serverless deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

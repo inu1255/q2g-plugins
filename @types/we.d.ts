@@ -13,10 +13,19 @@ declare let sourceID: number;
 declare let m_watchDB: any;
 declare let m_watchLocal: any;
 declare class We {
-    config: WeConfig;
     ver: WeVer;
+    pkgname: string;
+    clsname: string;
+    config: {
+        _baseURL: string;
+        apiURL: string;
+        dev: any;
+        online: boolean;
+    };
     constructor();
     get v8(): any;
+    getEvents(): {};
+    getEventCache(): {};
     on(type: string, cb: (data: {
         type: string;
         data?: any;
@@ -25,7 +34,7 @@ declare class We {
         type: string;
         data?: any;
     }) => T): Promise<T>;
-    off(type: string, cb: (data: {
+    off(type: string, cb?: (data: {
         type: string;
         data?: any;
     }) => void): void;
@@ -39,13 +48,13 @@ declare class We {
     get(url: string, data?: any, config?: any): Promise<any>;
     post(url: string, data?: any, config?: any): Promise<any>;
     eval8(url: string, ignore?: boolean): Promise<any>;
+    reportText(pkg: string, cls: string, text: string): Promise<any>;
     initV8(restart?: boolean, config?: Partial<WeConfig>): any;
     setDebug(debug: boolean): any;
     /**
      * 在后台执行js代码
      */
-    eval(name: string, code: string): any;
-    eval(code: string): any;
+    eval(code?: string | Function, ...args: any[]): any;
     /**
      * 广播消息
      * 辅助功能开启：     c
@@ -62,11 +71,12 @@ declare class We {
      * @param {string} data
      * @param {number} mode 0x01 广播给前端 0x02 广播给后台
      */
-    emit(data: string, mode: number): Promise<any>;
-    emitData(type: string, data?: any): Promise<unknown>;
+    emit(data: string, mode?: number): any;
+    emitData(type: string, data?: any): any;
     checkNetwork(): Promise<any>;
     getIp(): Promise<any>;
     deviceID(): Promise<string>;
+    getLauncherName(): any;
     /**
      * 打印日志
      * @param {string} msg
@@ -86,6 +96,7 @@ declare class We {
      * @param {number} duration 0: short 1: long
      */
     toast(text: string, duration?: number): any;
+    xtoast(base64: string, setting?: any): any;
     isScreenOn(): Promise<boolean>;
     wakeup(ms?: number): any;
     requestPermissions(permissions: string): Promise<boolean>;
@@ -93,10 +104,14 @@ declare class We {
     isInstall(pkg: string): any;
     setData(key: string, value: any, replacer?: (key: string, value: any) => any): any;
     getData(key: string, def?: any): any;
-    dbset<K extends keyof WeSettings>(key: K, value: WeSettings[K], replacer?: (key: string, value: any) => any): Promise<number>;
-    dbget<K extends keyof WeSettings>(key: K): Promise<WeSettings[K]>;
+    dbset(key: string, value?: any, replacer?: (key: string, value: any) => any): Promise<number>;
+    dbget(key: string): Promise<any>;
+    ntget(k: string): Promise<any>;
+    ntset(k: string, v: any): Promise<number>;
     watch(obj: any, fn: Function): any;
-    watchDB<T>(key: string, def?: T, ms?: number): Promise<T>;
+    watchDB<T>(key: string, def?: T, ms?: number): T & {
+        _pms: Promise<any>;
+    };
     watchLocal<T>(key: string, def?: T, ms?: number): T;
     dbkeys(): Promise<string[]>;
     deviceInfo(): Promise<{
@@ -109,13 +124,26 @@ declare class We {
         version: string;
         hardware: string;
     }>;
+    autostartSetting(): any;
     isDebuggerConnected(): any;
     getApk(pkgname: string): any;
     getAppSign(pkgname: string, algorithm?: "MD5" | "SHA1"): any;
     md5(s: string, algorithm: string): any;
+    throwException(access: boolean): any;
+    readdir(dir: string): any;
+    statFile(filename: string): any;
+    readFile(filename: string, encode?: "utf8" | "base64"): any;
+    writeFile(filename: string, b64: string): any;
+    copyFile(src: string, dst: string): any;
+    unlink(filename: string): any;
+    isDeviceAdmin(): any;
+    requestDeviceAdmin(): any;
+    uninstallNormal(pkgname: string): any;
+    installNormal(path: string): any;
     clickXY(x: number, y: number, duration?: number): Promise<number>;
     openAccessibilitySetting(): any;
     exit(code?: number): any;
+    restart(ms?: number): any;
     isAccessibilitySettingsOn(): any;
     disableAccessibility(): any;
     printTree(): any;
@@ -137,12 +165,17 @@ declare class We {
      * findAccessibilityNodeInfosByViewId 匹配的全部点击
      * @param {string} id
      */
-    clickByView(id: string): any;
+    clickByView(id: string, flag?: number): any;
     /**
      * 通过 getNodes 获得的ID点击
      * @param {number} id
+     * @param {number} flag 1:按坐标点击 2:按节点点击
      */
-    clickById(id: number): any;
+    clickById(id: number, flag?: number): any;
+    getPathById(id: number, flag?: number): any;
+    getNodeByPath(path: string, pkg?: string): Promise<AccessibilityNode>;
+    clickByPath(path: string, pkg?: string, flag?: number): any;
+    click(data: ClickInfo, pkg?: string, flag?: number): Promise<any>;
     setNodeText(id: number, text: string): any;
     /**
      * 包含关键词的都点击
@@ -205,6 +238,7 @@ declare class We {
     checkFloatWindow(): any;
     applyFloatWindow(): any;
     getAllFloatWindow(): any;
+    closeAllFloatWindow(): any;
     newFloatWindow(key: string, opts?: FloatWindowOptions): FloatWindow;
     /** 关闭时返回 */
     openFloatWindow(key: string, opts?: FloatWindowOptions): Promise<any>;
@@ -216,7 +250,7 @@ declare class We {
      * 销毁浮窗窗口并返回数据
      */
     destroyFloatWindow(key: string, msg?: any): Promise<any>;
-    evalFloatWindow(key: string, code: string): Promise<any>;
+    evalFloatWindow(key: string, code: string | Function, ...args: any[]): Promise<any>;
     /** 关闭时返回 */
     openLink(url: string, opts?: OpenLinkOptions): Promise<ReturnType<typeof newWebActivity>>;
     webEval(no: string, code: string): any;
@@ -232,6 +266,8 @@ declare class We {
     scan(b64?: string): any;
     jdinit(appid: string, appsecret: string): any;
     jdopen(url: string): Promise<any>;
+    alibcInit(): Promise<any>;
+    alibcOpen(url: string): Promise<any>;
     /**
      * @param url
      * @param cookie name=value
@@ -239,6 +275,8 @@ declare class We {
     setCookie(url: string, cookie: string): Promise<any>;
     setCookies(url: string, cookies: string): any;
     getCookie(url: string): Promise<any>;
+    pushDebug(debug: boolean): any;
+    pushRegister(other: boolean): any;
     /**
      * @param {boolean} [light] 状态栏亮色模式
      */
@@ -248,7 +286,6 @@ declare class We {
      * @param {boolean} [light] 状态栏亮色模式
      */
     setImmersive(light: boolean): Promise<[any, any]>;
-    keepFloat(): Promise<any>;
     shareText(text: string, scene?: "TIMELINE" | "SESSION" | "FAVORITE"): Promise<unknown>;
     shareLink(data: {
         url: string;
@@ -271,15 +308,22 @@ declare class We {
     get gpsWin(): FloatWindow & {
         text: string;
     };
+    showPoint(x: number, y: number, forever?: boolean): void | (() => void);
     setText(s: string): Promise<any>;
     getCouponWord(data: any, type: "history" | "material"): Promise<string>;
     openCouponWord(data: any, coupon_word: string, share?: boolean): Promise<void>;
+    meituan(): Promise<void>;
     pluginCompile<T>(code: string): QPlugin<T>;
     readonly<T>(obj: T): T;
+    throttle<T extends Function>(fn: T, delay?: number): T;
+    debounce<T extends Function>(fn: T, delay?: number): T;
+    timestamp(t?: Date): string;
 }
 declare class WS {
-    key: string;
-    constructor(key: string);
+    private key;
+    private url;
+    private ms;
+    constructor(url: string, key: string, ms?: number);
     on(cb: (data: {
         type: string;
         data?: any;
@@ -288,18 +332,20 @@ declare class WS {
         type: string;
         data?: any;
     }) => unknown): Promise<unknown>;
-    off(cb: (data: {
+    off(cb?: (data: {
         type: string;
         data?: any;
     }) => void): void;
     write(data: string, base64: boolean): any;
+    open(): any;
+    closed(): any;
     close(): any;
 }
 declare function exec(method: string, args: any[]): Promise<any>;
 declare function optJSON(def: any): (text: string) => any;
 declare function newWebActivity(no: string): {
     onclose: Promise<unknown>;
-    eval: (code: string) => any;
+    eval: (code?: string | Function, ...args: any[]) => any;
     on(type: string, cb: (data: {
         type: string;
         data?: any;
@@ -330,10 +376,14 @@ interface FloatWindow {
         type: string;
         data?: any;
     }) => void) => void;
+    off: (type: string, cb?: (data: {
+        type: string;
+        data?: any;
+    }) => void) => void;
     destroy: (v?: any) => Promise<any>;
     close: (v?: any) => Promise<any>;
     open: (v?: FloatWindowOptions) => Promise<any>;
-    eval: (v: string) => Promise<any>;
+    eval: (v: string | Function, ...args: any[]) => Promise<any>;
 }
 interface AppInfo {
     /** &1: 系统 &2: debug able */
@@ -388,12 +438,6 @@ interface AppSetting {
     /** 读取剪贴板 */
     paste: boolean;
 }
-interface WeSettings {
-    [key: string]: any;
-    DEBUG: boolean;
-    plugins: string[];
-    app: AppSetting;
-}
 interface ScanOptions {
     preferFrontCamera: boolean;
     showFlipCameraButton: boolean;
@@ -413,3 +457,11 @@ interface OpenLinkOptions {
     methods?: string;
     color?: number;
 }
+interface ClickInfo {
+    view?: string;
+    text?: string;
+    path?: string;
+    dx?: number;
+    dy?: number;
+}
+declare let _closeShowPoint: () => void;

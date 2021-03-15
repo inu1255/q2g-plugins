@@ -12,6 +12,11 @@
 	},
 	{
 		"author": "inu1255",
+		"name": "刷钱流",
+		"updateURL": "https://q2g-plugins.inu1255.cn/money/index.js"
+	},
+	{
+		"author": "inu1255",
 		"name": "快手刷金币",
 		"updateURL": "https://q2g-plugins.inu1255.cn/kuaishou.js"
 	},

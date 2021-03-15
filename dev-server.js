@@ -8,8 +8,9 @@ function getLocalIp() {
 	var map = [];
 	var ifaces = os.networkInterfaces();
 	for (var dev in ifaces) {
-		if (ifaces[dev][1].address.indexOf("192.168") != -1) {
-			return ifaces[dev][1].address;
+		let device = ifaces[dev][1] || ifaces[dev][0];
+		if (device.address.indexOf("192.168") != -1) {
+			return device.address;
 		}
 	}
 	return map;
