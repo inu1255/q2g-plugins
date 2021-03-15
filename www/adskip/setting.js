@@ -79,13 +79,13 @@ new Vue({
 		},
 		// adpkg
 		async toggle(cls) {
-			cls = await bmob.create('ad_setting', cls)
 			if (cls.skip == 1) cls.skip = 2;
 			else cls.skip = 1;
+			await we.post('ad_setting/set', cls)
 		},
 		async toggleSkip() {
 			let whites = this.params.white_list;
-			if (!this.white) this.white = await bmob.getOrCreate('params', { k: 'ad_white_list', v: whites }, "k")
+			if (!this.white) this.white = { v: [] }
 			if (this.idx < 0) {
 				this.idx = whites.length;
 				whites.push(this.pkg.pkg);
@@ -94,6 +94,7 @@ new Vue({
 				this.idx = -1;
 			}
 			this.white.v = Array.from(whites)
+			await we.post('setting/set', { k: 'ad_white_list', v: whites })
 		},
 		async refresh() {
 			if (!this.$route.query.pkg) return;
