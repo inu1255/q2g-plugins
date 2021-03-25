@@ -37,15 +37,20 @@ const app = http.createServer(function (req, res) {
 	let url = URL.parse(req.url);
 	let filename = "www" + url.pathname;
 	if (filename.endsWith("/")) filename += "index.html";
+	if (filename.endsWith(".js")) res.setHeader("Content-type", "text/javascript;charset=utf-8");
+	else if (filename.endsWith(".html")) res.setHeader("Content-type", "text/html;charset=utf-8");
+	else {
+		try {
+			fs.createReadStream(filename).pipe(res);
+		} catch (error) {}
+		return;
+	}
 	fs.readFile(filename, "utf8", function (err, data) {
 		if (err) {
 			res.writeHead(404, "Not Found");
 			res.end();
 		} else {
-			if (filename.endsWith(".js")) res.setHeader("Content-type", "text/javascript;charset=utf-8");
-			else if (filename.endsWith(".html")) res.setHeader("Content-type", "text/html;charset=utf-8");
-			res.end(data);
-			// res.end(data.replace(/https:\/\/q2g-plugins\.inu1255\.cn/gi, baseURL));
+			res.end(data.replace(/https:\/\/q2g-plugins\.inu1255\.cn/gi, baseURL));
 		}
 	});
 });

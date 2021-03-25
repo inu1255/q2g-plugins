@@ -1,7 +1,9 @@
 // ==UserScript==
 // @author            inu1255
 // @name              广告跳过
-// @version           1.3.1
+// @version           1.3.2
+// @minApk            10802
+// @cronFreq          1e3
 // @namespace         https://github.com/inu1255/q2g-plugins
 // @settingURL        https://q2g-plugins.inu1255.cn/adskip/setting.html
 // @updateURL         https://q2g-plugins.inu1255.cn/adskip/index.js
@@ -44,7 +46,13 @@ exports.params = {
 			关闭关注浮窗: {pkg: "com.sina.weibo", cls: "关闭关注浮窗", skip: 2, cnt: 0, last: 0},
 		},
 		"com.kugou.android": {
-			"com.kugou.android.app.splash.SplashActivity": {pkg: "com.kugou.android", cls: "com.kugou.android.app.splash.SplashActivity", skip: 1, cnt: 0, last: 0},
+			"com.kugou.android.app.splash.SplashActivity": {
+				pkg: "com.kugou.android",
+				cls: "com.kugou.android.app.splash.SplashActivity",
+				skip: 1,
+				cnt: 0,
+				last: 0,
+			},
 		},
 	},
 	ad: {},
@@ -125,11 +133,9 @@ exports.onWindowChange = async function (pkgname, clsname) {
 		return;
 	}
 	switch_expire_at = Date.now() + switch_duration;
-	if (await run(pkgname).catch((x) => 0)) return;
 	// 1.7.7版本后contentchange事件有效，使用contentchange事件来跳过广告
 	if (+we.ver.buildVersion > 10706) return;
 	while (currentID == globalID) {
-		if (await run(pkgname).catch((x) => 0)) return;
 		if (!(await trySkip(pkgname, clsname, currentID))) break;
 		await we.sleep(300);
 	}
@@ -147,17 +153,37 @@ async function trySkip(pkgname, clsname, currentID) {
 	}
 	let b = Date.now();
 	if (skipCls && skipCls.skip == 1 && we.clickByPath) {
-		if (await we.clickByPath(onlyTextPkg.has(pkgname) ? "t[\\d\\s]*(跳过|skip)[\\d\\s]*" : "x[\\d\\s]*(跳过|skip)[\\d\\s]*", pkgname)) {
+		if (
+			await we.clickByPath(
+				onlyTextPkg.has(pkgname)
+					? "t[\\d\\s]*(跳过|skip)[\\d\\s]*"
+					: "x[\\d\\s]*(跳过|skip)[\\d\\s]*",
+				pkgname
+			)
+		) {
 			onSkip(skipCls);
 			clickAt = Date.now();
 			switch_expire_at = 0;
-			console.log("#" + currentID, "直接跳过:", Date.now() - switch_expire_at + switch_duration, Date.now() - b, "秒", skipCls);
+			console.log(
+				"#" + currentID,
+				"直接跳过:",
+				Date.now() - switch_expire_at + switch_duration,
+				Date.now() - b,
+				"秒",
+				skipCls
+			);
 			return;
 		}
 	}
 	{
 		if (currentID != globalID) {
-			console.log("#" + currentID, "中断2", Date.now() - switch_expire_at + switch_duration, pkgname, clsname);
+			console.log(
+				"#" + currentID,
+				"中断2",
+				Date.now() - switch_expire_at + switch_duration,
+				pkgname,
+				clsname
+			);
 			return;
 		}
 		let b = Date.now();
@@ -183,7 +209,13 @@ async function trySkip(pkgname, clsname, currentID) {
 				return false;
 			});
 		}
-		console.log("用时:", Date.now() - switch_expire_at + switch_duration, Date.now() - b, "秒", list);
+		console.log(
+			"用时:",
+			Date.now() - switch_expire_at + switch_duration,
+			Date.now() - b,
+			"秒",
+			list
+		);
 		// 禁止1秒内连续点击
 		if (clickAt + 3e3 > Date.now()) {
 			console.log("#" + currentID, "禁止连续点击", pkgname, clsname);
@@ -222,9 +254,17 @@ async function checkAndClick(pkgname, clsname, node, clickFunction) {
 		if (!html) html = await we.get("https://q2g-plugins.inu1255.cn/adskip/dlg.html");
 		if (html) {
 			var close;
-			if (we.showPoint) close = we.showPoint((node.left + node.right) / 2, (node.top + node.bottom) / 2, true);
+			if (we.showPoint)
+				close = we.showPoint((node.left + node.right) / 2, (node.top + node.bottom) / 2, true);
 			size = size || (await we.screenSize());
-			skip = await win.open({data: html, x: 100, y: size.y - 500 - size.f, width: size.x - 200, height: 315, forceLayout: true});
+			skip = await win.open({
+				data: html,
+				x: 100,
+				y: size.y - 500 - size.f,
+				width: size.x - 200,
+				height: 315,
+				forceLayout: true,
+			});
 			close && close();
 		}
 		open_at = 0;
@@ -247,7 +287,9 @@ async function oncontent(pkgname, clsname, node) {
 	if (/^(cn\.inu1255)|\.input/.test(pkgname)) return;
 	if (/跳过|skip/i.test(node.text) || (!onlyTextPkg.has(pkgname) && /skip/.test(node.view))) {
 		clickAt = Date.now();
-		await checkAndClick(pkgname, clsname, node, () => we.clickXY((node.left + node.right) / 2, (node.top + node.bottom) / 2));
+		await checkAndClick(pkgname, clsname, node, () =>
+			we.clickXY((node.left + node.right) / 2, (node.top + node.bottom) / 2)
+		);
 	} else {
 		await trySkip(pkgname, clsname, globalID);
 	}
@@ -262,7 +304,10 @@ exports.onContentChange = async function (pkg, cls, node) {
 	if (!win) win = we.newFloatWindow("adskip");
 	if (cls == "com.sina.weibo.feed.DetailWeiboActivity") {
 		let sina_weibo = exports.params.ad_setting["com.sina.weibo"];
-		if (sina_weibo["关闭广告共享计划"].skip == 1) await we.clickByView("com.sina.weibo:id/iv_ad_x", 2).then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
+		if (sina_weibo["关闭广告共享计划"].skip == 1)
+			await we
+				.clickByView("com.sina.weibo:id/iv_ad_x", 2)
+				.then((x) => x && onSkip(sina_weibo["关闭广告共享计划"]));
 		if (sina_weibo["关闭评论区广告"].skip == 1)
 			await we
 				.clickByView("com.sina.weibo:id/ll_close", 2)
@@ -270,39 +315,33 @@ exports.onContentChange = async function (pkg, cls, node) {
 					if (ok) return we.sleep(500).then(() => we.clickByPath("T不感兴趣", "com.sina.weibo", 2));
 				})
 				.then((x) => x && onSkip(sina_weibo["关闭评论区广告"]));
-		if (sina_weibo["关闭关注浮窗"].skip == 1) await we.clickByView("com.sina.weibo:id/close_layout", 2).then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
+		if (sina_weibo["关闭关注浮窗"].skip == 1)
+			await we
+				.clickByView("com.sina.weibo:id/close_layout", 2)
+				.then((x) => x && onSkip(sina_weibo["关闭关注浮窗"]));
 	}
-	if (await run(pkg).catch((x) => 0)) return;
 	await oncontent(pkg, cls, node);
 };
-async function run(pkg) {
+let nextSteps = [];
+exports.onTime = async function () {
 	if (!we.click) return;
+	let pkg = await we.getCurrentPackage();
+	let white_list = exports.params.white_list;
+	if (white_list.indexOf(pkg) >= 0) return;
+	let cls = await we.getCurrentClass();
 	let data = exports.params.ad[pkg];
 	if (!data) return;
+	let step = nextSteps[0];
+	if (step && step.cls == cls && (await we.click(step))) {
+		nextSteps.shift();
+		return true;
+	}
 	for (let k in data) {
 		let steps = data[k];
-		let isFirst = true; // [第一步, 第一步成功]
-		let ok = false;
-		for (let step of steps) {
-			let retry = 5;
-			ok = false;
-			while (retry-- > 0) {
-				ok = await we.click(step, pkg);
-				if (ok) {
-					isFirst = false;
-					break;
-				} else if (isFirst) {
-					break;
-				}
-				await we.sleep(500);
-			}
-			if (!ok) break;
-		}
-		if (!isFirst) {
-			console.log(k, ok ? "执行成功" : "执行失败");
+		let step = steps[0];
+		if (step && step.cls == cls && (await we.click(step, pkg))) {
+			nextSteps = steps.slice(1);
 			return true;
-		} else {
-			console.log(k, "不成功");
 		}
 	}
-}
+};
