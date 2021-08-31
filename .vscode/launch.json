@@ -7,11 +7,20 @@
 		{
 			"type": "pwa-node",
 			"request": "launch",
-			"name": "Launch Program",
+			"name": "file",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
 			"program": "${file}"
+		},
+		{
+			"type": "pwa-node",
+			"request": "launch",
+			"name": "dev-server",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}\\dev-server.js"
 		}
 	]
 }

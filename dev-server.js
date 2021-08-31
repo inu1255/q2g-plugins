@@ -1,3 +1,6 @@
+process.on("uncaughtException", function (err) {
+	console.log(err);
+});
 const http = require("http");
 const os = require("os");
 const URL = require("url");
@@ -58,5 +61,6 @@ const app = http.createServer(function (req, res) {
 const port = argv.port || 8000;
 app.listen(port, function () {
 	baseURL = `http://${getLocalIp()}:${port}`;
+	// baseURL = "http://192-168-3-29.s.test.cab";
 	console.log(`listening ${baseURL}`);
 });
